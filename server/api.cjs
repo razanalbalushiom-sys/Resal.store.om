@@ -80,6 +80,10 @@ class SupabaseClient {
     return this.request('PATCH', `${table}?id=eq.${id}`, { body: updates });
   }
 
+  async updateBy(table, column, value, updates) {
+    return this.request('PATCH', `${table}?${column}=eq.${encodeURIComponent(value)}`, { body: updates });
+  }
+
   async delete(table, id) {
     return this.request('DELETE', `${table}?id=eq.${id}`);
   }
@@ -135,6 +139,25 @@ function normalizeOrder(row) {
     total: Number(row.total ?? row.total_price ?? 0),
     deliveryCost: Number(row.deliveryCost ?? row.delivery_cost ?? 0),
     statusLabel: row.status === 'new' ? 'جديد' : row.status
+  };
+}
+
+function normalizeProduct(row) {
+  if (!row) return row;
+  const images = typeof row.images === 'string' ? JSON.parse(row.images || '[]') : (row.images || []);
+  const firstImage = row.image_url ? [row.image_url] : [];
+  return {
+    ...row,
+    cat: row.cat || row.category || '',
+    category: row.category || row.cat || '',
+    emoji: row.emoji || '📦',
+    oldPrice: row.oldPrice == null ? null : Number(row.oldPrice),
+    badgeType: row.badgeType || '',
+    rating: Number(row.rating || 5),
+    reviews: Number(row.reviews || 0),
+    desc: row.desc || row.description || '',
+    images: images.length ? images : firstImage,
+    price: Number(row.price || 0)
   };
 }
 
@@ -213,71 +236,94 @@ router.get('/products', async (req, res) => {
     }
 
     const products = await supabase.select('products', filter);
-    res.json({ success: true, products: products || [] });
+    res.json({ success: true, products: (products || []).map(normalizeProduct) });
   } catch (error) {
     console.error('Get products error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-router.post('/products', upload.single('image'), async (req, res) => {
+router.post('/products', upload.any(), async (req, res) => {
   try {
     if (req.session.userRole !== 'admin') {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
 
-    const { name, description, price, category, stock } = req.body;
+    const { name, description, price, category, cat, stock, oldPrice, emoji, badge, desc } = req.body;
     
     if (!name || !price) {
       return res.status(400).json({ success: false, error: 'Name and price required' });
     }
 
-    let imageUrl = null;
-    if (req.file) {
-      const filename = `product_${Date.now()}_${req.file.originalname}`;
-      imageUrl = saveImageBuffer(req.file.buffer, filename);
+    const images = [];
+    for (const file of req.files || []) {
+      const filename = `product_${Date.now()}_${file.originalname}`;
+      images.push(saveImageBuffer(file.buffer, filename));
     }
 
     const product = {
       name,
-      description,
+      description: description || desc || '',
       price: parseFloat(price),
-      category,
+      category: category || cat || '',
+      cat: cat || category || '',
+      emoji: emoji || '📦',
+      oldPrice: oldPrice ? parseFloat(oldPrice) : null,
+      badge: badge || null,
+      badgeType: badge === 'جديد' ? 'badge-new' : badge === 'خصم' ? 'badge-sale' : badge === 'ساخن' ? 'badge-hot' : '',
+      rating: 5,
+      reviews: 0,
+      desc: desc || description || '',
       stock: parseInt(stock) || 0,
-      image_url: imageUrl
+      image_url: images[0] || null,
+      images
     };
 
     const result = await supabase.insert('products', product);
-    res.json({ success: true, product: result[0] });
+    res.json({ success: true, ok: true, product: normalizeProduct(result[0]) });
   } catch (error) {
     console.error('Create product error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-router.put('/products/:id', upload.single('image'), async (req, res) => {
+router.put('/products/:id', upload.any(), async (req, res) => {
   try {
     if (req.session.userRole !== 'admin') {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
 
     const { id } = req.params;
-    const { name, description, price, category, stock } = req.body;
+    const { name, description, price, category, cat, stock, oldPrice, emoji, badge, desc } = req.body;
 
     const updates = {};
     if (name) updates.name = name;
     if (description) updates.description = description;
+    if (desc) updates.desc = desc;
     if (price) updates.price = parseFloat(price);
-    if (category) updates.category = category;
+    if (category || cat) {
+      updates.category = category || cat;
+      updates.cat = cat || category;
+    }
     if (stock) updates.stock = parseInt(stock);
+    if (oldPrice !== undefined) updates.oldPrice = oldPrice ? parseFloat(oldPrice) : null;
+    if (emoji) updates.emoji = emoji;
+    if (badge !== undefined) {
+      updates.badge = badge || null;
+      updates.badgeType = badge === 'جديد' ? 'badge-new' : badge === 'خصم' ? 'badge-sale' : badge === 'ساخن' ? 'badge-hot' : '';
+    }
 
-    if (req.file) {
-      const filename = `product_${Date.now()}_${req.file.originalname}`;
-      updates.image_url = saveImageBuffer(req.file.buffer, filename);
+    if (req.files && req.files.length) {
+      const images = req.files.map(file => {
+        const filename = `product_${Date.now()}_${file.originalname}`;
+        return saveImageBuffer(file.buffer, filename);
+      });
+      updates.image_url = images[0];
+      updates.images = images;
     }
 
     const result = await supabase.update('products', id, updates);
-    res.json({ success: true, product: result[0] });
+    res.json({ success: true, ok: true, product: normalizeProduct(result[0]) });
   } catch (error) {
     console.error('Update product error:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -404,7 +450,7 @@ router.post('/settings', async (req, res) => {
 
     // Try to update first, if not found, insert
     try {
-      const result = await supabase.update('settings', key, { value });
+      const result = await supabase.updateBy('settings', 'key', key, { value });
       res.json({ success: true, setting: result[0] });
     } catch {
       const result = await supabase.insert('settings', { key, value });
