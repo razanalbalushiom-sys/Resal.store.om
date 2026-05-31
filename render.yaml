@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: resal-store
+    env: node
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: UPLOAD_DIR
+        value: public/uploads
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
