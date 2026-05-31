@@ -498,7 +498,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border2);
 <nav>
   <a href="#" class="nav-logo">
     <div class="logo-mark">R</div>
-    <span class="logo-text">رسال <span>شوب</span></span>
+    <span class="logo-text" id="siteLogoText">رسال <span>شوب</span></span>
   </a>
   <div class="nav-links">
     <a href="#categories">الفئات</a>
@@ -622,9 +622,9 @@ footer{background:var(--bg2);border-top:1px solid var(--border2);
     <div class="footer-brand">
       <div class="nav-logo" style="margin-bottom:.75rem;display:inline-flex;">
         <div class="logo-mark">R</div>
-        <span class="logo-text" style="margin-right:10px;">رسال <span>شوب</span></span>
+        <span class="logo-text" id="footerLogoText" style="margin-right:10px;">رسال <span>شوب</span></span>
       </div>
-      <p>لسنا الوحيدين ولكننا نطمح لنكون الأفضل. نوصل الجودة لبابك أينما كنت في السلطنة.</p>
+      <p id="footerDescription">لسنا الوحيدين ولكننا نطمح لنكون الأفضل. نوصل الجودة لبابك أينما كنت في السلطنة.</p>
       <div class="footer-social">
         <a href="#" class="social-btn">𝕏</a><a href="#" class="social-btn">📸</a>
         <a href="#" class="social-btn">📘</a><a href="#" class="social-btn">💬</a>
@@ -635,7 +635,7 @@ footer{background:var(--bg2);border-top:1px solid var(--border2);
     <div class="footer-col"><h4>رسال شوب</h4><a href="#">من نحن</a><a href="#">الوظائف</a><a href="#">سياسة الخصوصية</a><a href="#">الشروط والأحكام</a></div>
   </div>
   <div class="footer-bottom">
-    <p>© 2025 رسال شوب. جميع الحقوق محفوظة. 🇴🇲 مسقط، سلطنة عُمان.</p>
+    <p id="footerCopyright">© 2025 رسال شوب. جميع الحقوق محفوظة. 🇴🇲 مسقط، سلطنة عُمان.</p>
   </div>
 </footer>
 
@@ -857,6 +857,10 @@ footer{background:var(--bg2);border-top:1px solid var(--border2);
         <div class="section-tag" style="margin-bottom:.5rem;">الإعدادات</div>
         <h2 class="section-title" style="margin-bottom:1.5rem;">إعدادات المتجر</h2>
         <div class="add-product-form" style="max-width:500px;">
+          <div style="margin-bottom:10px;font-weight:800;color:#fff;">معلومات الموقع</div>
+          <div class="form-group"><label class="form-label">اسم الموقع</label><input class="form-input" id="settingSiteName" value="رسال شوب"/></div>
+          <div class="form-group"><label class="form-label">وصف الموقع في الفوتر</label><input class="form-input" id="settingSiteDescription" value="لسنا الوحيدين ولكننا نطمح لنكون الأفضل. نوصل الجودة لبابك أينما كنت في السلطنة."/></div>
+          <div style="margin-top:10px;margin-bottom:10px;font-weight:800;color:#fff;">معلومات التواصل والتوصيل</div>
           <div class="form-group"><label class="form-label">إيميل استقبال الطلبات</label><input class="form-input" id="settingEmail" value="orders@resal.om"/></div>
           <div class="form-group"><label class="form-label">رقم واتساب للإشعارات</label><input class="form-input" id="settingWA" value="+96890000000" dir="ltr"/></div>
           <div class="form-group"><label class="form-label">سعر التوصيل (ر.ع)</label><input class="form-input" type="number" step="0.001" id="settingDelivery" value="1.500"/></div>
@@ -917,7 +921,13 @@ let productSwipeStartX = 0;
 // Auth accounts
 let accounts = [];
 let currentUser = null;
-let settings = { deliveryCost: 1.500, notifyEmail: 'orders@resal.om', waNumber: '+96890000000' };
+let settings = {
+  siteName: 'رسال شوب',
+  siteDescription: 'لسنا الوحيدين ولكننا نطمح لنكون الأفضل. نوصل الجودة لبابك أينما كنت في السلطنة.',
+  deliveryCost: 1.500,
+  notifyEmail: 'orders@resal.om',
+  waNumber: '+96890000000'
+};
 
 const catLabels = {headphones:'سماعات',gaming:'ألعاب',screens:'شاشات',microphone:'مايكروفونات',accessories:'إكسسوارات',chairs:'كراسي وطاولات'};
 
@@ -969,6 +979,52 @@ function fetchProducts(){
       console.warn('Products API failed', e);
       renderProducts();
     });
+}
+
+function logoHtml(name){
+  const parts=String(name||'رسال شوب').trim().split(/\s+/);
+  if(parts.length<2)return esc(name||'رسال شوب');
+  const last=parts.pop();
+  return `${esc(parts.join(' '))} <span>${esc(last)}</span>`;
+}
+
+function applySettings(){
+  if(id('siteLogoText')) id('siteLogoText').innerHTML=logoHtml(settings.siteName);
+  if(id('footerLogoText')) id('footerLogoText').innerHTML=logoHtml(settings.siteName);
+  if(id('footerDescription')) id('footerDescription').textContent=settings.siteDescription;
+  if(id('footerCopyright')) id('footerCopyright').textContent=`© 2025 ${settings.siteName}. جميع الحقوق محفوظة. 🇴🇲 مسقط، سلطنة عُمان.`;
+}
+
+function fillSettingsForm(){
+  if(!id('settingSiteName'))return;
+  id('settingSiteName').value=settings.siteName;
+  id('settingSiteDescription').value=settings.siteDescription;
+  id('settingEmail').value=settings.notifyEmail;
+  id('settingWA').value=settings.waNumber;
+  id('settingDelivery').value=Number(settings.deliveryCost||0).toFixed(3);
+}
+
+function normalizeSettingsPayload(data){
+  if(Array.isArray(data)){
+    const obj={}; data.forEach(r=>{obj[r.key]=r.value;}); return obj;
+  }
+  return data || {};
+}
+
+function loadSettings(){
+  fetch(API_BASE+'/settings',{credentials:'include'})
+    .then(r=>r.json())
+    .then(j=>{
+      const s=normalizeSettingsPayload(j.settings||j.rows);
+      settings.siteName=s.siteName||settings.siteName;
+      settings.siteDescription=s.siteDescription||settings.siteDescription;
+      settings.notifyEmail=s.notifyEmail||settings.notifyEmail;
+      settings.waNumber=s.waNumber||settings.waNumber;
+      settings.deliveryCost=parseFloat(s.deliveryCost)||settings.deliveryCost;
+      applySettings();
+      fillSettingsForm();
+    })
+    .catch(e=>{ console.warn('Settings API failed', e); applySettings(); });
 }
 
 function renderProducts(){
@@ -1646,11 +1702,16 @@ function removeMod(email){
 
 // ========================= SETTINGS =========================
 function saveSettings(){
+  settings.siteName=id('settingSiteName').value.trim()||'رسال شوب';
+  settings.siteDescription=id('settingSiteDescription').value.trim()||settings.siteDescription;
   settings.notifyEmail=id('settingEmail').value;
   settings.waNumber=id('settingWA').value;
   settings.deliveryCost=parseFloat(id('settingDelivery').value)||1.500;
+  applySettings();
   // Post to server settings (admin only)
   const payload = {
+    siteName: settings.siteName,
+    siteDescription: settings.siteDescription,
     notifyEmail: settings.notifyEmail,
     waNumber: settings.waNumber,
     deliveryCost: settings.deliveryCost,
@@ -1662,8 +1723,8 @@ function saveSettings(){
     smtp_from: id('settingSMTPFrom').value
   };
   fetch(API_BASE+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),credentials:'include'})
-    .then(r=>r.json()).then(j=>{ if(j.ok) showToast('تم حفظ الإعدادات ✅'); else showToast('فشل حفظ الإعدادات','⚠️'); })
-    .catch(e=>{ showToast('تعذر الوصول للخادم — تم حفظ محلياً','⚠️'); });
+    .then(r=>r.json()).then(j=>{ if(j.ok||j.success) showToast('تم حفظ الإعدادات ✅'); else showToast('فشل حفظ الإعدادات','⚠️'); })
+    .catch(e=>{ showToast('تعذر حفظ الإعدادات في الخادم','⚠️'); });
 }
 
 // Password reset UI
@@ -1694,7 +1755,7 @@ function toggleMenu(){id('mobileMenu').classList.toggle('open');}
 function closeMenu(){id('mobileMenu').classList.remove('open');}
 
 // Init
-fetchProducts();updateCartUI();
+loadSettings();fetchProducts();updateCartUI();
 </script>
 </body>
 </html>

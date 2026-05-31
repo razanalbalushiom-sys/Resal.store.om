@@ -473,8 +473,12 @@ router.put('/orders/:id', async (req, res) => {
 
 router.get('/settings', async (req, res) => {
   try {
-    const settings = await supabase.select('settings', '');
-    res.json({ success: true, settings: settings || [] });
+    const rows = await supabase.select('settings', '');
+    const settings = {};
+    for (const row of rows || []) {
+      settings[row.key] = row.value;
+    }
+    res.json({ success: true, settings, rows: rows || [] });
   } catch (error) {
     console.error('Get settings error:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -487,20 +491,22 @@ router.post('/settings', async (req, res) => {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
 
-    const { key, value } = req.body;
+    const updates = req.body || {};
+    const saved = {};
 
-    if (!key) {
-      return res.status(400).json({ success: false, error: 'Key required' });
+    for (const [key, rawValue] of Object.entries(updates)) {
+      if (!key) continue;
+      const value = rawValue == null ? '' : String(rawValue);
+      const updated = await supabase.updateBy('settings', 'key', key, { value });
+      if (updated && updated.length) {
+        saved[key] = updated[0].value;
+      } else {
+        const inserted = await supabase.insert('settings', { key, value });
+        saved[key] = inserted[0]?.value ?? value;
+      }
     }
 
-    // Try to update first, if not found, insert
-    try {
-      const result = await supabase.updateBy('settings', 'key', key, { value });
-      res.json({ success: true, setting: result[0] });
-    } catch {
-      const result = await supabase.insert('settings', { key, value });
-      res.json({ success: true, setting: result[0] });
-    }
+    res.json({ success: true, ok: true, settings: saved });
   } catch (error) {
     console.error('Upsert setting error:', error);
     res.status(500).json({ success: false, error: error.message });
