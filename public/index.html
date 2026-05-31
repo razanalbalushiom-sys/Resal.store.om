@@ -128,6 +128,9 @@ nav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
 .section-title{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:900;letter-spacing:-1px;color:#fff;}
 .section-link{color:var(--text2);font-size:14px;text-decoration:none;transition:color .2s;white-space:nowrap;font-weight:600;}
 .section-link:hover{color:var(--purple-bright);}
+.products-summary{display:flex;align-items:center;gap:10px;color:var(--text2);font-size:14px;font-weight:700;}
+.products-count{min-width:34px;height:34px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;
+  background:var(--purple-dim);border:1px solid var(--border3);color:var(--purple-bright);font-weight:900;}
 
 /* ===== CAT FILTER ===== */
 .categories{display:flex;gap:10px;overflow-x:auto;padding:0 clamp(1rem,4vw,3rem) 1rem;scrollbar-width:none;position:relative;z-index:1;}
@@ -513,8 +516,11 @@ footer{background:var(--bg2);border-top:1px solid var(--border2);
 <!-- PRODUCTS -->
 <section class="section" id="products">
   <div class="section-header">
-    <div><div class="section-tag">أبرز المنتجات</div><h2 class="section-title">المنتجات المميزة</h2></div>
-    <a href="#" class="section-link">عرض الكل ←</a>
+    <div>
+      <div class="section-tag" id="productsSectionTag">تسوق حسب الفئة</div>
+      <h2 class="section-title" id="productsSectionTitle">كل المنتجات</h2>
+    </div>
+    <div class="products-summary"><span class="products-count" id="productsCount">0</span><span>منتج متاح</span></div>
   </div>
   <div class="product-grid" id="productGrid"></div>
 </section>
@@ -535,15 +541,13 @@ footer{background:var(--bg2);border-top:1px solid var(--border2);
     <h3>💜 ادفع مع ثواني</h3>
     <p>متجر رسال متكامل مع ثواني — منصة الدفع الرقمي الأولى في عُمان. .</p>
     <div class="trust-badges">
-      <div class="trust-badge thawani-badge">💜 معتمد من ثواني</div>
       <div class="trust-badge">💳 فيزا وماستركارد</div>
-      <div class="trust-badge">🔐 مشفر SSL</div>
-      <div class="trust-badge">📲 تقسيط 0%</div>
+      <div class="trust-badge">🔐 آمن SSL</div>
     </div>
   </div>
   <div class="payment-block">
     <h3>🚚 شحن سريع</h3>
-    <p>طلباتك تُسوصل لك سريعا.</p>
+    <p>طلباتك ستصل لك سريعاً</p>
     <div class="trust-badges">
    
       <div class="trust-badge">📍 جميع المحافظات</div>
@@ -583,7 +587,6 @@ footer{background:var(--bg2);border-top:1px solid var(--border2);
   </div>
   <div class="footer-bottom">
     <p>© 2025 رسال شوب. جميع الحقوق محفوظة. 🇴🇲 مسقط، سلطنة عُمان.</p>
-    <p>الدفع عبر <strong style="color:#c4b5fd;">ثواني</strong> · الشحن عبر <strong style="color:var(--purple-bright);">رسال</strong></p>
   </div>
 </footer>
 
@@ -829,9 +832,46 @@ function genOrderId(){ return 'RS-'+nextOrderId++; }
 // ========================= PRODUCTS =========================
 function catLabel(c){ return catLabels[c]||c; }
 
+function normalizeProductFromApi(p){
+  return {
+    ...p,
+    cat: p.cat || p.category || 'accessories',
+    emoji: p.emoji || '📦',
+    oldPrice: p.oldPrice == null ? null : Number(p.oldPrice),
+    badgeType: p.badgeType || '',
+    rating: Number(p.rating || 5),
+    reviews: Number(p.reviews || 0),
+    desc: p.desc || p.description || '',
+    images: Array.isArray(p.images) ? p.images : [],
+    price: Number(p.price || 0)
+  };
+}
+
+function fetchProducts(){
+  fetch(API_BASE+'/products',{credentials:'include'})
+    .then(r=>r.json())
+    .then(j=>{
+      const serverProducts = Array.isArray(j) ? j : (j.products || []);
+      if(serverProducts.length){
+        products = serverProducts.map(normalizeProductFromApi);
+      }
+      renderProducts();
+      if(document.getElementById('productsMgmtGrid')) renderProductsMgmt();
+    })
+    .catch(e=>{
+      console.warn('Products API failed', e);
+      renderProducts();
+    });
+}
+
 function renderProducts(){
   const grid=id('productGrid');
   const filtered=activeFilter==='all'?products:products.filter(p=>p.cat===activeFilter);
+  const title = activeFilter==='all' ? 'كل المنتجات' : catLabel(activeFilter);
+  const tag = activeFilter==='all' ? 'تسوق حسب الفئة' : 'منتجات ' + catLabel(activeFilter);
+  if(id('productsSectionTitle')) id('productsSectionTitle').textContent = title;
+  if(id('productsSectionTag')) id('productsSectionTag').textContent = tag;
+  if(id('productsCount')) id('productsCount').textContent = filtered.length;
   if(!filtered.length){grid.innerHTML='<div style="color:var(--text3);font-size:15px;padding:2rem;">لا توجد منتجات في هذه الفئة حالياً.</div>';return;}
   grid.innerHTML=filtered.map(p=>`
     <div class="product-card">
