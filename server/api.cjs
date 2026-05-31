@@ -103,13 +103,15 @@ class SupabaseClient {
         name: this.storageBucket,
         public: true,
         file_size_limit: 5242880,
-        allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
       })
     });
 
-    if (!response.ok && response.status !== 409) {
+    if (!response.ok) {
       const text = await response.text();
-      throw new Error(`Storage bucket setup failed: ${text}`);
+      if (response.status !== 409 && !text.toLowerCase().includes('already')) {
+        throw new Error(`Storage bucket setup failed: ${text}`);
+      }
     }
 
     this.storageBucketReady = true;

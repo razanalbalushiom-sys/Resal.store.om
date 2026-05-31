@@ -944,7 +944,7 @@ function renderProducts(){
     <div class="product-card" tabindex="0" onclick="openProductDetails(${p.id})" onkeydown="if(event.key==='Enter')openProductDetails(${p.id})">
       <div class="product-img">
         ${p.badge?`<div class="product-badge ${p.badgeType}">${p.badge}</div>`:''}
-        ${p.images&&p.images.length?`<img src="${esc(p.images[0])}" style="width:100%;height:100%;object-fit:cover;" onerror="imgFallback(this,'${esc(p.emoji||'📦')}')">`:p.emoji}
+        ${productMainVisual(p)}
       </div>
       <div class="product-info">
         <div class="product-category">${catLabel(p.cat)}</div>
@@ -980,6 +980,14 @@ function imgFallback(el, emoji='📦'){
   const holder=el.parentElement;
   if(!holder)return;
   holder.innerHTML=`<div class="product-gallery-emoji">${emoji||'📦'}</div>`;
+}
+
+function productMainVisual(p){
+  const imgs=productImages(p);
+  if(imgs.length){
+    return `<img src="${esc(imgs[0])}" style="width:100%;height:100%;object-fit:cover;" onerror="imgFallback(this,'${esc(p.emoji||'📦')}')">`;
+  }
+  return p.emoji||'📦';
 }
 
 function openProductDetails(pid){
@@ -1233,12 +1241,24 @@ function editProductImages(pid){
 function handleEditProductImages(e){
   const files = Array.from(e.target.files||[]); if(!files.length||!editingProductId) return;
   const p = products.find(x=>x.id===editingProductId); if(!p) return;
-  p.images = [];
-  let readCount=0;
-  files.forEach(f=>{
-    const r=new FileReader(); r.onload=ev=>{ p.images.push(ev.target.result); readCount++; if(readCount===files.length){ renderProducts(); renderProductsMgmt(); showToast('تم تحديث صور المنتج ✅'); } };
-    r.readAsDataURL(f);
-  });
+  const form = new FormData();
+  files.forEach(f=>form.append('images', f));
+  fetch(API_BASE+'/products/'+editingProductId,{method:'PUT',body:form,credentials:'include'})
+    .then(r=>r.json())
+    .then(j=>{
+      if(j && j.ok && j.product){
+        Object.assign(p, normalizeProductFromApi(j.product));
+        renderProducts(); renderProductsMgmt();
+        showToast('تم تحديث صور المنتج ✅');
+      } else {
+        throw new Error(j.error||'upload failed');
+      }
+    })
+    .catch(e=>{
+      console.warn('Image upload failed', e);
+      showToast('تعذر رفع الصور للخادم','⚠️');
+    })
+    .finally(()=>{ e.target.value=''; editingProductId=null; });
 }
 
 function submitOrder(name,wilayat,area,phone,grand,paymentMethod='cod'){
@@ -1429,7 +1449,7 @@ function renderProductsMgmt(){
   const grid=id('productsMgmtGrid');
   grid.innerHTML=products.map(p=>`
     <div class="mgmt-card">
-      <div class="mgmt-card-img">${p.images&&p.images.length?`<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;">`:p.emoji}</div>
+      <div class="mgmt-card-img">${productMainVisual(p)}</div>
       <div class="mgmt-card-info">
         <div class="mgmt-card-name">${p.name}</div>
         <div class="mgmt-card-price">${omr(p.price)}</div>

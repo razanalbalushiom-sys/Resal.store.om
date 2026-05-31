@@ -79,6 +79,19 @@ CREATE TABLE IF NOT EXISTS password_resets (
 
 CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
 
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'product-images',
+  'product-images',
+  true,
+  5242880,
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif']
+)
+ON CONFLICT (id) DO UPDATE
+SET public = true,
+    file_size_limit = EXCLUDED.file_size_limit,
+    allowed_mime_types = EXCLUDED.allowed_mime_types;
+
 -- Existing-project migrations.
 ALTER TABLE orders ALTER COLUMN user_id DROP NOT NULL;
 ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_user_id_fkey;
