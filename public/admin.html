@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - ريسال</title>
+    <title>لوحة التحكم - رسال</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; direction: rtl; }
@@ -47,7 +47,7 @@
 
     <div id="dashboardPage" class="hidden">
         <div class="header">
-            <h1>لوحة التحكم - ريسال</h1>
+            <h1>لوحة التحكم - رسال</h1>
             <button onclick="logout()">خروج</button>
         </div>
         <div class="container">
@@ -90,12 +90,25 @@
             const password = document.getElementById('password').value;
             
             try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password }),
-                    credentials: 'include'
-                });
+                const res = await fetch(
+                    'https://segydollxwwhnsygyhyg.supabase.co/functions/v1/admin-login',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email, password })
+                    }
+                );
+
+                const data = await res.json();
+
+                if (data.success) {
+                    showDashboard();
+                } else {
+                    document.getElementById('loginError').textContent =
+                        data.error || 'بيانات الدخول غير صحيحة';
+                }
                 const data = await res.json();
                 
                 if (data.ok) {

@@ -1,5 +1,4 @@
 import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
-import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
@@ -150,11 +149,27 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+export default defineConfig(async () => {
+  const plugins: Plugin[] = [react(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
 
-export default defineConfig({
-  plugins,
-  resolve: {
+  // Only load Tailwind Vite plugin during development to avoid importing it at
+  // runtime on production servers (like Render) where vite/dev plugins aren't needed.
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      const tailwindMod = await import("@tailwindcss/vite");
+      const tailwind = (tailwindMod && (tailwindMod.default ?? tailwindMod)) as any;
+      if (typeof tailwind === "function") {
+        // insert after react() for predictable ordering
+        plugins.splice(1, 0, tailwind());
+      }
+    } catch (e) {
+      // ignore missing optional dev-only plugin
+    }
+  }
+
+  return {
+    plugins,
+    resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
