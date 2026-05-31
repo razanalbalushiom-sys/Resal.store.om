@@ -125,7 +125,7 @@ function saveImageBuffer(buffer, filename) {
 
 // ============ LOGIN / LOGOUT ============
 
-router.post('/api/login', async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
@@ -167,7 +167,7 @@ router.post('/api/login', async (req, res) => {
   }
 });
 
-router.post('/api/logout', (req, res) => {
+router.post('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       return res.status(500).json({ success: false, error: 'Logout failed' });
@@ -178,7 +178,7 @@ router.post('/api/logout', (req, res) => {
 
 // ============ PRODUCTS ============
 
-router.get('/api/products', async (req, res) => {
+router.get('/products', async (req, res) => {
   try {
     const category = req.query.category;
     
@@ -195,7 +195,7 @@ router.get('/api/products', async (req, res) => {
   }
 });
 
-router.post('/api/products', upload.single('image'), async (req, res) => {
+router.post('/products', upload.single('image'), async (req, res) => {
   try {
     if (req.session.userRole !== 'admin') {
       return res.status(403).json({ success: false, error: 'Admin only' });
@@ -230,7 +230,7 @@ router.post('/api/products', upload.single('image'), async (req, res) => {
   }
 });
 
-router.put('/api/products/:id', upload.single('image'), async (req, res) => {
+router.put('/products/:id', upload.single('image'), async (req, res) => {
   try {
     if (req.session.userRole !== 'admin') {
       return res.status(403).json({ success: false, error: 'Admin only' });
@@ -259,7 +259,7 @@ router.put('/api/products/:id', upload.single('image'), async (req, res) => {
   }
 });
 
-router.delete('/api/products/:id', async (req, res) => {
+router.delete('/products/:id', async (req, res) => {
   try {
     if (req.session.userRole !== 'admin') {
       return res.status(403).json({ success: false, error: 'Admin only' });
@@ -276,7 +276,7 @@ router.delete('/api/products/:id', async (req, res) => {
 
 // ============ ORDERS ============
 
-router.get('/api/orders', async (req, res) => {
+router.get('/orders', async (req, res) => {
   try {
     if (!req.session.userId) {
       return res.status(401).json({ success: false, error: 'Not authenticated' });
@@ -297,7 +297,7 @@ router.get('/api/orders', async (req, res) => {
   }
 });
 
-router.post('/api/orders', async (req, res) => {
+router.post('/orders', async (req, res) => {
   try {
     if (!req.session.userId) {
       return res.status(401).json({ success: false, error: 'Not authenticated' });
@@ -324,7 +324,7 @@ router.post('/api/orders', async (req, res) => {
   }
 });
 
-router.put('/api/orders/:id', async (req, res) => {
+router.put('/orders/:id', async (req, res) => {
   try {
     if (req.session.userRole !== 'admin') {
       return res.status(403).json({ success: false, error: 'Admin only' });
@@ -347,7 +347,7 @@ router.put('/api/orders/:id', async (req, res) => {
 
 // ============ SETTINGS ============
 
-router.get('/api/settings', async (req, res) => {
+router.get('/settings', async (req, res) => {
   try {
     const settings = await supabase.select('settings', '');
     res.json({ success: true, settings: settings || [] });
@@ -357,7 +357,7 @@ router.get('/api/settings', async (req, res) => {
   }
 });
 
-router.post('/api/settings', async (req, res) => {
+router.post('/settings', async (req, res) => {
   try {
     if (req.session.userRole !== 'admin') {
       return res.status(403).json({ success: false, error: 'Admin only' });
@@ -385,7 +385,7 @@ router.post('/api/settings', async (req, res) => {
 
 // ============ TEST ============
 
-router.get('/api/test', (req, res) => {
+router.get('/test', (req, res) => {
   res.json({ 
     success: true, 
     message: 'API is working',
