@@ -784,6 +784,46 @@ footer{background:var(--bg2);border-top:1px solid var(--border2);
             </div>
           </div>
         </div>
+        <div id="editProductFormContainer" style="display:none;margin-bottom:1.5rem;">
+          <div class="add-product-form">
+            <div style="font-weight:800;font-size:16px;color:#fff;margin-bottom:16px;">✏️ تعديل المنتج</div>
+            <input type="hidden" id="editProductId"/>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">اسم المنتج</label><input class="form-input" id="editPName"/></div>
+              <div class="form-group"><label class="form-label">الفئة</label>
+                <select class="form-select" id="editPCat">
+                  <option value="headphones">سماعات</option><option value="gaming">ألعاب</option>
+                  <option value="screens">شاشات</option><option value="microphone">مايكروفونات</option>
+                  <option value="accessories">إكسسوارات</option><option value="chairs">كراسي وطاولات</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">السعر (ر.ع)</label><input class="form-input" id="editPPrice" type="number" step="0.001"/></div>
+              <div class="form-group"><label class="form-label">سعر قبل الخصم</label><input class="form-input" id="editPOldPrice" type="number" step="0.001"/></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">الإيموجي</label><input class="form-input" id="editPEmoji"/></div>
+              <div class="form-group"><label class="form-label">الشارة</label>
+                <select class="form-select" id="editPBadge">
+                  <option value="">بدون</option><option value="جديد">جديد</option>
+                  <option value="خصم">خصم</option><option value="ساخن">ساخن</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group"><label class="form-label">الوصف</label><input class="form-input" id="editPDesc"/></div>
+            <div class="form-group">
+              <label class="form-label">صور المنتج</label>
+              <input type="file" id="editPImagesFile" multiple accept="image/*" onchange="previewEditProductImages(event)" />
+              <div id="editPCurrentImages" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+              <div id="editPNewPreview" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;"></div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
+              <button class="btn-primary" onclick="saveEditedProduct()">حفظ التعديلات</button>
+              <button class="btn-ghost" onclick="hideEditProductForm()">إلغاء</button>
+            </div>
+          </div>
+        </div>
         <div class="products-mgmt-grid" id="productsMgmtGrid"></div>
       </div>
 
@@ -1233,34 +1273,6 @@ function updateNewProductPreview(){
   const container=id('newPPreview'); if(!container)return; container.innerHTML=newProductImages.map(src=>`<img src="${src}" style="max-width:80px;margin-left:6px;border-radius:8px;"/>`).join('');
 }
 
-// Edit images for existing product (uses hidden input)
-let editingProductId = null;
-function editProductImages(pid){
-  editingProductId = pid; id('editPImages').value=''; id('editPImages').click();
-}
-function handleEditProductImages(e){
-  const files = Array.from(e.target.files||[]); if(!files.length||!editingProductId) return;
-  const p = products.find(x=>x.id===editingProductId); if(!p) return;
-  const form = new FormData();
-  files.forEach(f=>form.append('images', f));
-  fetch(API_BASE+'/products/'+editingProductId,{method:'PUT',body:form,credentials:'include'})
-    .then(r=>r.json())
-    .then(j=>{
-      if(j && j.ok && j.product){
-        Object.assign(p, normalizeProductFromApi(j.product));
-        renderProducts(); renderProductsMgmt();
-        showToast('تم تحديث صور المنتج ✅');
-      } else {
-        throw new Error(j.error||'upload failed');
-      }
-    })
-    .catch(e=>{
-      console.warn('Image upload failed', e);
-      showToast('تعذر رفع الصور للخادم','⚠️');
-    })
-    .finally(()=>{ e.target.value=''; editingProductId=null; });
-}
-
 function submitOrder(name,wilayat,area,phone,grand,paymentMethod='cod'){
   const orderId=genOrderId();
   const order={
@@ -1454,22 +1466,98 @@ function renderProductsMgmt(){
         <div class="mgmt-card-name">${p.name}</div>
         <div class="mgmt-card-price">${omr(p.price)}</div>
         <div class="mgmt-actions">
-          <button class="mgmt-btn" onclick="editProduct(${p.id})">✏️ تعديل</button>
-          <button class="mgmt-btn" onclick="editProductImages(${p.id})">🖼️ صور</button>
+          <button class="mgmt-btn" onclick="showEditProductForm(${p.id})">✏️ تعديل</button>
           <button class="mgmt-btn del" onclick="deleteProduct(${p.id})">🗑️ حذف</button>
         </div>
       </div>
     </div>`).join('');
 }
 
-// Hidden input for editing images
-document.addEventListener('DOMContentLoaded',()=>{
-  const inp=document.createElement('input'); inp.type='file'; inp.multiple=true; inp.accept='image/*'; inp.id='editPImages'; inp.style.display='none';
-  inp.onchange=handleEditProductImages; document.body.appendChild(inp);
-});
-
 function showAddProductForm(){id('addProductFormContainer').style.display='block';}
 function hideAddProductForm(){id('addProductFormContainer').style.display='none';}
+function hideEditProductForm(){
+  id('editProductFormContainer').style.display='none';
+  id('editProductId').value='';
+  id('editPImagesFile').value='';
+  id('editPCurrentImages').innerHTML='';
+  id('editPNewPreview').innerHTML='';
+}
+
+function previewThumb(src){
+  return `<img src="${esc(src)}" style="width:78px;height:78px;object-fit:cover;border-radius:8px;border:1px solid var(--border2);" onerror="this.style.display='none'"/>`;
+}
+
+function showEditProductForm(pid){
+  const p=products.find(x=>x.id===pid); if(!p)return;
+  hideAddProductForm();
+  id('editProductId').value=p.id;
+  id('editPName').value=p.name||'';
+  id('editPCat').value=p.cat||'accessories';
+  id('editPPrice').value=p.price||'';
+  id('editPOldPrice').value=p.oldPrice||'';
+  id('editPEmoji').value=p.emoji||'';
+  id('editPBadge').value=p.badge||'';
+  id('editPDesc').value=p.desc||'';
+  id('editPImagesFile').value='';
+  const imgs=productImages(p);
+  id('editPCurrentImages').innerHTML=imgs.length
+    ? imgs.map(previewThumb).join('')
+    : '<div style="color:var(--text3);font-size:13px;">لا توجد صور محفوظة حالياً.</div>';
+  id('editPNewPreview').innerHTML='';
+  id('editProductFormContainer').style.display='block';
+  id('editProductFormContainer').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function previewEditProductImages(e){
+  const files=Array.from(e.target.files||[]);
+  if(!files.length){id('editPNewPreview').innerHTML='';return;}
+  let done=0, previews=[];
+  files.forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      previews.push(ev.target.result); done++;
+      if(done===files.length){
+        id('editPNewPreview').innerHTML=`
+          <div style="width:100%;color:var(--purple-bright);font-size:13px;font-weight:700;">الصور الجديدة ستحل مكان الصور الحالية بعد الحفظ:</div>
+          ${previews.map(previewThumb).join('')}`;
+      }
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+function saveEditedProduct(){
+  const pid=id('editProductId').value;
+  const p=products.find(x=>String(x.id)===String(pid)); if(!p)return;
+  const name=id('editPName').value.trim();
+  const cat=id('editPCat').value;
+  const price=parseFloat(id('editPPrice').value);
+  const oldP=id('editPOldPrice').value ? parseFloat(id('editPOldPrice').value) : '';
+  const emoji=id('editPEmoji').value||'📦';
+  const badge=id('editPBadge').value||'';
+  const desc=id('editPDesc').value.trim();
+  if(!name||!price){showToast('يرجى إدخال الاسم والسعر','⚠️');return;}
+  const form=new FormData();
+  form.append('name',name); form.append('cat',cat); form.append('price',price); form.append('oldPrice',oldP);
+  form.append('emoji',emoji); form.append('badge',badge); form.append('desc',desc);
+  const files=id('editPImagesFile').files;
+  for(let i=0;i<files.length;i++) form.append('images',files[i]);
+  fetch(API_BASE+'/products/'+pid,{method:'PUT',body:form,credentials:'include'})
+    .then(r=>r.json())
+    .then(j=>{
+      if(j && j.ok && j.product){
+        Object.assign(p, normalizeProductFromApi(j.product));
+        renderProducts(); renderProductsMgmt(); hideEditProductForm();
+        showToast('تم حفظ تعديلات المنتج ✅');
+      } else {
+        throw new Error(j.error||'save failed');
+      }
+    })
+    .catch(e=>{
+      console.warn('Save product failed', e);
+      showToast('تعذر حفظ التعديلات في الخادم','⚠️');
+    });
+}
 
 function addNewProduct(){
   const name=id('newPName').value.trim();
@@ -1493,12 +1581,8 @@ function addNewProduct(){
     id('newPName').value='';id('newPPrice').value='';id('newPOldPrice').value='';id('newPEmoji').value='';id('newPDesc').value='';
     newProductImages=[]; updateNewProductPreview(); id('newPImages').value=''; hideAddProductForm();
   }).catch(e=>{
-    // fallback to client-only behavior
-    const newP={id:Date.now(),name,cat,emoji,price,oldPrice:oldP||null,badge,badgeType:badge?badgeTypes[badge]||'':'',rating:5.0,reviews:0,desc,images: newProductImages.slice() };
-    products.unshift(newP); renderProducts(); renderProductsMgmt();
-    id('newPName').value='';id('newPPrice').value='';id('newPOldPrice').value='';id('newPEmoji').value='';id('newPDesc').value='';
-    newProductImages=[]; updateNewProductPreview(); id('newPImages').value=''; hideAddProductForm();
-    showToast(`تم إضافة ${name} محلياً (الخادم غير متاح)`);
+    console.warn('Create product failed', e);
+    showToast('تعذر حفظ المنتج في الخادم. لم يتم نشره للمتسوقين.','⚠️');
   });
 }
 
@@ -1508,15 +1592,6 @@ function deleteProduct(pid){
   products=products.filter(x=>x.id!==pid);
   renderProducts();renderProductsMgmt();
   showToast(`تم حذف ${p?.name||'المنتج'} 🗑️`,'🗑️');
-}
-
-function editProduct(pid){
-  const p=products.find(x=>x.id===pid);if(!p)return;
-  const newName=prompt('اسم المنتج:',p.name);if(!newName)return;
-  const newPrice=parseFloat(prompt('السعر (ر.ع):',p.price));if(isNaN(newPrice))return;
-  p.name=newName;p.price=newPrice;
-  renderProducts();renderProductsMgmt();
-  showToast(`تم تحديث ${newName} ✅`);
 }
 
 // ========================= MODERATORS =========================
