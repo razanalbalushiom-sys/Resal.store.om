@@ -90,16 +90,14 @@
             const password = document.getElementById('password').value;
             
             try {
-                const res = await fetch(
-                    'https://segydollxwwhnsygyhyg.supabase.co/functions/v1/admin-login',
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ email, password })
-                    }
-                );
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password }),
+                    credentials: 'include'
+                });
 
                 const data = await res.json();
 
@@ -124,7 +122,8 @@
         async function loadOrders() {
             try {
                 const res = await fetch('/api/orders', { credentials: 'include' });
-                const orders = await res.json();
+                const data = await res.json();
+                const orders = Array.isArray(data) ? data : (data.orders || []);
                 
                 document.getElementById('totalOrders').textContent = orders.length;
                 document.getElementById('newOrders').textContent = orders.filter(o => o.status === 'new').length;
@@ -132,8 +131,8 @@
                 
                 document.getElementById('ordersBody').innerHTML = orders.map(o => `
                     <tr>
-                        <td>${o.order_id}</td>
-                        <td>${o.customer_name}</td>
+                        <td>${o.order_id || o.id}</td>
+                        <td>${o.customer_name || o.name || ''}</td>
                         <td>${o.wilayat}</td>
                         <td>${o.phone}</td>
                         <td>${o.total} ر.ع</td>

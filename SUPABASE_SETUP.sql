@@ -32,10 +32,20 @@ CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 -- Orders Table
 CREATE TABLE IF NOT EXISTS orders (
   id BIGSERIAL PRIMARY KEY,
-  user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-  total_price DECIMAL(10, 2) NOT NULL,
+  user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  order_id VARCHAR(50) UNIQUE,
+  customer_name VARCHAR(255),
+  wilayat VARCHAR(255),
+  area VARCHAR(255),
+  phone VARCHAR(50),
+  delivery VARCHAR(50),
+  "deliveryCost" DECIMAL(10, 2) DEFAULT 0,
+  total DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  total_price DECIMAL(10, 2),
   status VARCHAR(50) DEFAULT 'new',
   items JSONB,
+  payment VARCHAR(50) DEFAULT 'cod',
+  proof TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -64,10 +74,26 @@ CREATE TABLE IF NOT EXISTS password_resets (
 CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);
 
 -- Insert default admin user (password: resal2025)
--- Note: In production, use bcrypt to hash passwords
 INSERT INTO users (email, password, name, role) 
-VALUES ('admin@resal.om', '$2b$10$YourHashedPasswordHere', 'Admin', 'admin')
+VALUES ('admin@resal.om', '$2b$10$IxuLhv/3fu10uhUBf8w2RuvGAB37chGwqZYAKRzOszmVIDxCY.sFK', 'Admin', 'admin')
 ON CONFLICT (email) DO NOTHING;
+
+-- If your orders table already exists, run these ALTER statements once.
+ALTER TABLE orders ALTER COLUMN user_id DROP NOT NULL;
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_user_id_fkey;
+ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_id VARCHAR(50) UNIQUE;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS wilayat VARCHAR(255);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS area VARCHAR(255);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery VARCHAR(50);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS "deliveryCost" DECIMAL(10, 2) DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS total DECIMAL(10, 2) NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS total_price DECIMAL(10, 2);
+ALTER TABLE orders ALTER COLUMN total_price DROP NOT NULL;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment VARCHAR(50) DEFAULT 'cod';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS proof TEXT;
 
 -- Sample products
 INSERT INTO products (name, description, price, category, stock) VALUES

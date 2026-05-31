@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const session = require('express-session');
 const multer = require('multer');
+const bcrypt = require('bcrypt');
 
 const router = express.Router();
 
@@ -123,6 +124,28 @@ function saveImageBuffer(buffer, filename) {
   return '/uploads/' + filename;
 }
 
+function normalizeOrder(row) {
+  if (!row) return row;
+  const items = typeof row.items === 'string' ? JSON.parse(row.items || '[]') : (row.items || []);
+  return {
+    ...row,
+    id: row.order_id || row.id,
+    name: row.customer_name || row.name || '',
+    items,
+    total: Number(row.total ?? row.total_price ?? 0),
+    deliveryCost: Number(row.deliveryCost ?? row.delivery_cost ?? 0),
+    statusLabel: row.status === 'new' ? 'جديد' : row.status
+  };
+}
+
+function isPasswordMatch(password, storedPassword) {
+  if (!storedPassword) return false;
+  if (storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$')) {
+    return bcrypt.compareSync(password, storedPassword);
+  }
+  return storedPassword === password;
+}
+
 // ============ LOGIN / LOGOUT ============
 
 router.post('/login', async (req, res) => {
@@ -142,8 +165,7 @@ router.post('/login', async (req, res) => {
 
     const user = users[0];
     
-    // Check password (in production, should be hashed)
-    if (user.password !== password) {
+    if (!isPasswordMatch(password, user.password)) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
@@ -154,6 +176,9 @@ router.post('/login', async (req, res) => {
 
     res.json({ 
       success: true, 
+      ok: true,
+      name: user.name,
+      role: user.role,
       user: { 
         id: user.id, 
         email: user.email, 
@@ -284,13 +309,15 @@ router.get('/orders', async (req, res) => {
 
     const status = req.query.status;
     
-    let filter = `?user_id=eq.${req.session.userId}`;
+    let filter = req.session.userRole === 'admin' || req.session.userRole === 'moderator'
+      ? '?order=id.desc'
+      : `?user_id=eq.${req.session.userId}&order=id.desc`;
     if (status) {
       filter += `&status=eq.${encodeURIComponent(status)}`;
     }
 
     const orders = await supabase.select('orders', filter);
-    res.json({ success: true, orders: orders || [] });
+    res.json({ success: true, orders: (orders || []).map(normalizeOrder) });
   } catch (error) {
     console.error('Get orders error:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -299,25 +326,31 @@ router.get('/orders', async (req, res) => {
 
 router.post('/orders', async (req, res) => {
   try {
-    if (!req.session.userId) {
-      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    const { name, wilayat, area, phone, items, delivery, deliveryCost, total, totalPrice, payment } = req.body;
+
+    if (!name || !wilayat || !area || !phone || !items) {
+      return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
-    const { items, totalPrice } = req.body;
-
-    if (!items || !totalPrice) {
-      return res.status(400).json({ success: false, error: 'Items and totalPrice required' });
-    }
-
+    const orderId = 'RS-' + Math.floor(Date.now() / 1000);
     const order = {
-      user_id: req.session.userId,
+      user_id: req.session.userId || null,
+      order_id: orderId,
+      customer_name: name,
+      wilayat,
+      area,
+      phone,
       items,
-      total_price: parseFloat(totalPrice),
-      status: 'new'
+      delivery: delivery || 'without',
+      deliveryCost: parseFloat(deliveryCost) || 0,
+      total: parseFloat(total ?? totalPrice) || 0,
+      status: 'new',
+      payment: payment || 'cod',
+      proof: null
     };
 
     const result = await supabase.insert('orders', order);
-    res.json({ success: true, order: result[0] });
+    res.json({ success: true, ok: true, orderId, order: normalizeOrder(result[0]) });
   } catch (error) {
     console.error('Create order error:', error);
     res.status(500).json({ success: false, error: error.message });
