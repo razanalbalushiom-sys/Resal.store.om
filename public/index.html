@@ -1589,9 +1589,21 @@ function addNewProduct(){
 function deleteProduct(pid){
   if(!confirm('هل أنت متأكد من حذف هذا المنتج؟'))return;
   const p=products.find(x=>x.id===pid);
-  products=products.filter(x=>x.id!==pid);
-  renderProducts();renderProductsMgmt();
-  showToast(`تم حذف ${p?.name||'المنتج'} 🗑️`,'🗑️');
+  fetch(API_BASE+'/products/'+pid,{method:'DELETE',credentials:'include'})
+    .then(r=>r.json())
+    .then(j=>{
+      if(j && (j.success || j.ok)){
+        products=products.filter(x=>x.id!==pid);
+        renderProducts();renderProductsMgmt();renderDashboard();
+        showToast(`تم حذف ${p?.name||'المنتج'} 🗑️`,'🗑️');
+      } else {
+        throw new Error(j.error||'delete failed');
+      }
+    })
+    .catch(e=>{
+      console.warn('Delete product failed', e);
+      showToast('تعذر حذف المنتج من الخادم','⚠️');
+    });
 }
 
 // ========================= MODERATORS =========================
