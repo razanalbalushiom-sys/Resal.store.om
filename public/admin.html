@@ -109,13 +109,7 @@
                     document.getElementById('loginError').textContent =
                         data.error || 'بيانات الدخول غير صحيحة';
                 }
-                const data = await res.json();
-                
-                if (data.ok) {
-                    showDashboard();
-                } else {
-                    document.getElementById('loginError').textContent = 'بيانات الدخول غير صحيحة';
-                }
+              
             } catch(e) {
                 document.getElementById('loginError').textContent = 'خطأ في الاتصال';
             }
