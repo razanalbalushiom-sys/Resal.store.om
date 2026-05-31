@@ -16,6 +16,8 @@ services:
         value: "*"
       - key: UPLOAD_DIR
         value: public/uploads
+      - key: SUPABASE_STORAGE_BUCKET
+        value: product-images
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY

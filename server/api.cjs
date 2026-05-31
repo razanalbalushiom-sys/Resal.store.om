@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const fs = require('fs');
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const session = require('express-session');
@@ -14,6 +13,8 @@ class SupabaseClient {
   constructor() {
     this.url = process.env.SUPABASE_URL;
     this.key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    this.storageBucket = process.env.SUPABASE_STORAGE_BUCKET || 'product-images';
+    this.storageBucketReady = false;
     
     if (!this.url || !this.key) {
       console.error('Missing Supabase credentials');
@@ -87,6 +88,53 @@ class SupabaseClient {
   async delete(table, id) {
     return this.request('DELETE', `${table}?id=eq.${id}`);
   }
+
+  async ensureStorageBucket() {
+    if (this.storageBucketReady) return;
+    const response = await fetch(`${this.url}/storage/v1/bucket`, {
+      method: 'POST',
+      headers: {
+        'apikey': this.key,
+        'Authorization': `Bearer ${this.key}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: this.storageBucket,
+        name: this.storageBucket,
+        public: true,
+        file_size_limit: 5242880,
+        allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+      })
+    });
+
+    if (!response.ok && response.status !== 409) {
+      const text = await response.text();
+      throw new Error(`Storage bucket setup failed: ${text}`);
+    }
+
+    this.storageBucketReady = true;
+  }
+
+  async uploadImage(buffer, filename, contentType = 'application/octet-stream') {
+    await this.ensureStorageBucket();
+    const response = await fetch(`${this.url}/storage/v1/object/${this.storageBucket}/${filename}`, {
+      method: 'POST',
+      headers: {
+        'apikey': this.key,
+        'Authorization': `Bearer ${this.key}`,
+        'Content-Type': contentType,
+        'x-upsert': 'true'
+      },
+      body: buffer
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Image upload failed: ${text}`);
+    }
+
+    return `${this.url}/storage/v1/object/public/${this.storageBucket}/${filename}`;
+  }
 }
 
 const supabase = new SupabaseClient();
@@ -95,10 +143,6 @@ const supabase = new SupabaseClient();
 async function initializeAPI() {
   return router;
 }
-
-// Upload directory
-const UPLOAD_DIR = path.resolve(process.cwd(), process.env.UPLOAD_DIR || 'public/uploads');
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
@@ -122,10 +166,13 @@ router.use(session({
 }));
 
 // Helpers
-function saveImageBuffer(buffer, filename) {
-  const filepath = path.join(UPLOAD_DIR, filename);
-  fs.writeFileSync(filepath, buffer);
-  return '/uploads/' + filename;
+function safeUploadName(originalName = 'image') {
+  const ext = path.extname(originalName).toLowerCase().replace(/[^a-z0-9.]/g, '') || '.jpg';
+  return `products/${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
+}
+
+async function saveImageBuffer(file) {
+  return supabase.uploadImage(file.buffer, safeUploadName(file.originalname), file.mimetype);
 }
 
 function normalizeOrder(row) {
@@ -257,8 +304,7 @@ router.post('/products', upload.any(), async (req, res) => {
 
     const images = [];
     for (const file of req.files || []) {
-      const filename = `product_${Date.now()}_${file.originalname}`;
-      images.push(saveImageBuffer(file.buffer, filename));
+      images.push(await saveImageBuffer(file));
     }
 
     const product = {
@@ -314,10 +360,7 @@ router.put('/products/:id', upload.any(), async (req, res) => {
     }
 
     if (req.files && req.files.length) {
-      const images = req.files.map(file => {
-        const filename = `product_${Date.now()}_${file.originalname}`;
-        return saveImageBuffer(file.buffer, filename);
-      });
+      const images = await Promise.all(req.files.map(file => saveImageBuffer(file)));
       updates.image_url = images[0];
       updates.images = images;
     }
