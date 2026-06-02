@@ -13,7 +13,7 @@ services:
       - key: SESSION_SECRET
         generateValue: true
       - key: CORS_ORIGIN
-        value: "*"
+        value: https://resal-store-om.onrender.com
       - key: UPLOAD_DIR
         value: public/uploads
       - key: SUPABASE_STORAGE_BUCKET

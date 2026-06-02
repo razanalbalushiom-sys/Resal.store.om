@@ -147,7 +147,16 @@ async function initializeAPI() {
 }
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024, files: 8 },
+  fileFilter: (_req, file, cb) => {
+    if (!/^image\/(jpe?g|png|webp|gif|avif)$/.test(file.mimetype)) {
+      return cb(new Error('Only image files are allowed'));
+    }
+    cb(null, true);
+  }
+});
 
 // Rate limiting
 const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 });

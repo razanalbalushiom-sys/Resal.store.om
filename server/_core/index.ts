@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import helmet from "helmet";
 import path from "path";
 import fs from "fs";
 import { createRequire } from "module";
@@ -47,12 +48,18 @@ async function startServer() {
   // FIX #1: Trust Render's reverse proxy so req.protocol === 'https' in production
   // This is required for secure session cookies to work on Render
   app.set('trust proxy', 1);
+  app.disable('x-powered-by');
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }));
 
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.use(cookieParser());
-  app.use(cors({ origin: process.env.CORS_ORIGIN || true, credentials: true }));
+  const corsOrigin = process.env.CORS_ORIGIN === "*" ? true : (process.env.CORS_ORIGIN || true);
+  app.use(cors({ origin: corsOrigin, credentials: true }));
 
   // Serve uploaded files
   const uploadDir = path.resolve(process.cwd(), process.env.UPLOAD_DIR || 'public/uploads');
