@@ -86,6 +86,10 @@ async function startServer() {
   app.get('/', (req, res) => {
     res.sendFile(path.resolve(process.cwd(), 'public/index.html'));
   });
+
+  app.get('/admin.html', (req, res) => {
+    res.sendFile(path.resolve(process.cwd(), 'public/index.html'));
+  });
   
   app.use(express.static(staticDir));
   

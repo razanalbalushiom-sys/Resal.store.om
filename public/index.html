@@ -586,7 +586,6 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
     <a href="#contact">تواصل</a>
   </div>
   <div class="nav-right">
-    <button class="btn-ghost" style="padding:9px 16px;font-size:13px;" onclick="showAdminLogin()">⚙️ لوحة التحكم</button>
     <button class="nav-cart" onclick="openCart()">🛒 السلة <span class="cart-count" id="cartCount">0</span></button>
     <div class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
   </div>
@@ -599,7 +598,6 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
   <a href="#deals" onclick="closeMenu()">🔥 العروض</a>
   <a href="#shipping" onclick="closeMenu()">🚚 الشحن</a>
   <a href="#contact" onclick="closeMenu()">📧 تواصل معنا</a>
-  <a href="#" onclick="closeMenu();showAdminLogin()">⚙️ لوحة التحكم</a>
 </div>
 
 <!-- HERO -->
@@ -967,6 +965,7 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
 <script>
 // ========================= CONFIG =========================
 const API_BASE = '/api';
+const IS_ADMIN_PAGE = location.pathname.endsWith('/admin.html');
 
 // ========================= DATA =========================
 let products = [
@@ -1834,6 +1833,9 @@ function closeMenu(){id('mobileMenu').classList.remove('open');}
 
 // Init
 loadSettings();fetchProducts();updateCartUI();
+if(IS_ADMIN_PAGE){
+  setTimeout(showAdminLogin, 150);
+}
 </script>
 </body>
 </html>
