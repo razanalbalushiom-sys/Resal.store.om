@@ -89,6 +89,10 @@ class SupabaseClient {
     return this.request('DELETE', `${table}?id=eq.${id}`);
   }
 
+  async deleteBy(table, column, value) {
+    return this.request('DELETE', `${table}?${column}=eq.${encodeURIComponent(value)}`);
+  }
+
   async ensureStorageBucket() {
     if (this.storageBucketReady) return;
     const response = await fetch(`${this.url}/storage/v1/bucket`, {
@@ -189,20 +193,33 @@ async function saveImageBuffer(file) {
 function normalizeOrder(row) {
   if (!row) return row;
   const items = typeof row.items === 'string' ? JSON.parse(row.items || '[]') : (row.items || []);
+  const statusLabels = {
+    new: 'جديد',
+    processing: 'قيد التجهيز',
+    shipped: 'تم الشحن',
+    done: 'مكتمل',
+    cancelled: 'ملغي'
+  };
   return {
     ...row,
     id: row.order_id || row.id,
+    dbId: row.id,
     name: row.customer_name || row.name || '',
     items,
     total: Number(row.total ?? row.total_price ?? 0),
     deliveryCost: Number(row.deliveryCost ?? row.delivery_cost ?? 0),
+    statusLabel: statusLabels[row.status] || row.status,
     statusLabel: row.status === 'new' ? 'جديد' : row.status
+    , statusLabel: statusLabels[row.status] || row.status
   };
 }
 
 function normalizeProduct(row) {
   if (!row) return row;
   const images = typeof row.images === 'string' ? JSON.parse(row.images || '[]') : (row.images || []);
+  const productDetails = typeof row.product_details === 'string'
+    ? JSON.parse(row.product_details || '{}')
+    : (row.product_details || {});
   const firstImage = row.image_url ? [row.image_url] : [];
   return {
     ...row,
@@ -214,8 +231,30 @@ function normalizeProduct(row) {
     rating: Number(row.rating || 5),
     reviews: Number(row.reviews || 0),
     desc: row.desc || row.description || '',
+    productDetails,
+    specs: Array.isArray(productDetails.specs) ? productDetails.specs : [],
+    boxContents: Array.isArray(productDetails.boxContents) ? productDetails.boxContents : [],
+    warranty: productDetails.warranty || '',
+    deliveryTime: productDetails.deliveryTime || '',
     images: images.length ? images : firstImage,
+    stock: Number(row.stock || 0),
     price: Number(row.price || 0)
+  };
+}
+
+function parseLines(value) {
+  return String(value || '')
+    .split(/\r?\n/)
+    .map(v => v.trim())
+    .filter(Boolean);
+}
+
+function buildProductDetails(body) {
+  return {
+    specs: parseLines(body.specs),
+    boxContents: parseLines(body.boxContents),
+    warranty: String(body.warranty || '').trim(),
+    deliveryTime: String(body.deliveryTime || '').trim()
   };
 }
 
@@ -332,6 +371,7 @@ router.post('/products', upload.any(), async (req, res) => {
       reviews: 0,
       desc: desc || description || '',
       stock: parseInt(stock) || 0,
+      product_details: buildProductDetails(req.body),
       image_url: images[0] || null,
       images
     };
@@ -362,7 +402,7 @@ router.put('/products/:id', upload.any(), async (req, res) => {
       updates.category = category || cat;
       updates.cat = cat || category;
     }
-    if (stock) updates.stock = parseInt(stock);
+    if (stock !== undefined) updates.stock = parseInt(stock) || 0;
     if (oldPrice !== undefined) updates.oldPrice = oldPrice ? parseFloat(oldPrice) : null;
     if (emoji) updates.emoji = emoji;
     if (badge !== undefined) {
@@ -375,6 +415,8 @@ router.put('/products/:id', upload.any(), async (req, res) => {
       updates.image_url = images[0];
       updates.images = images;
     }
+
+    updates.product_details = buildProductDetails(req.body);
 
     const result = await supabase.update('products', id, updates);
     res.json({ success: true, ok: true, product: normalizeProduct(result[0]) });
@@ -432,6 +474,20 @@ router.post('/orders', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
 
+    const orderItems = Array.isArray(items) ? items : JSON.parse(items || '[]');
+    for (const item of orderItems) {
+      const productId = item.id;
+      const qty = Number(item.qty || 1);
+      if (!productId || qty <= 0) continue;
+      const rows = await supabase.select('products', `?id=eq.${encodeURIComponent(productId)}`);
+      const product = rows && rows[0];
+      if (!product) continue;
+      const stock = Number(product.stock || 0);
+      if (stock > 0 && qty > stock) {
+        return res.status(409).json({ success: false, error: `${product.name} is out of stock` });
+      }
+    }
+
     const orderId = 'RS-' + Math.floor(Date.now() / 1000);
     const order = {
       user_id: req.session.userId || null,
@@ -440,7 +496,7 @@ router.post('/orders', async (req, res) => {
       wilayat,
       area,
       phone,
-      items,
+      items: orderItems,
       delivery: delivery || 'without',
       deliveryCost: parseFloat(deliveryCost) || 0,
       total: parseFloat(total ?? totalPrice) || 0,
@@ -450,6 +506,18 @@ router.post('/orders', async (req, res) => {
     };
 
     const result = await supabase.insert('orders', order);
+    for (const item of orderItems) {
+      const productId = item.id;
+      const qty = Number(item.qty || 1);
+      if (!productId || qty <= 0) continue;
+      const rows = await supabase.select('products', `?id=eq.${encodeURIComponent(productId)}`);
+      const product = rows && rows[0];
+      if (!product) continue;
+      const stock = Number(product.stock || 0);
+      if (stock > 0) {
+        await supabase.update('products', productId, { stock: Math.max(0, stock - qty) });
+      }
+    }
     res.json({ success: true, ok: true, orderId, order: normalizeOrder(result[0]) });
   } catch (error) {
     console.error('Create order error:', error);
@@ -470,7 +538,10 @@ router.put('/orders/:id', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Status required' });
     }
 
-    const result = await supabase.update('orders', id, { status });
+    const updates = { status };
+    const result = String(id).startsWith('RS-')
+      ? await supabase.updateBy('orders', 'order_id', id, updates)
+      : await supabase.update('orders', id, updates);
     res.json({ success: true, order: result[0] });
   } catch (error) {
     console.error('Update order error:', error);
@@ -518,6 +589,36 @@ router.post('/settings', async (req, res) => {
     res.json({ success: true, ok: true, settings: saved });
   } catch (error) {
     console.error('Upsert setting error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============ BACKUP ============
+
+router.get('/backup', async (req, res) => {
+  try {
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Admin only' });
+    }
+
+    const [products, orders, settings, users] = await Promise.all([
+      supabase.select('products', '?order=id.asc'),
+      supabase.select('orders', '?order=id.desc'),
+      supabase.select('settings', '?order=key.asc'),
+      supabase.select('users', '?select=id,email,name,role,created_at&order=id.asc')
+    ]);
+
+    res.setHeader('Content-Disposition', `attachment; filename="resal-backup-${new Date().toISOString().slice(0, 10)}.json"`);
+    res.json({
+      success: true,
+      exportedAt: new Date().toISOString(),
+      products: products || [],
+      orders: orders || [],
+      settings: settings || [],
+      users: users || []
+    });
+  } catch (error) {
+    console.error('Backup error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

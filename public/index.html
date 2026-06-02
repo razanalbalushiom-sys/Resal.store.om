@@ -426,6 +426,14 @@ footer{background:var(--bg2);border-top:1px solid var(--border2);
 .status-processing{background:rgba(255,140,0,.15);color:#ff8c00;}
 .status-shipped{background:rgba(139,92,246,.2);color:var(--purple-bright);}
 .status-done{background:rgba(0,229,160,.1);color:#00e5a0;}
+.status-cancelled{background:rgba(255,71,87,.14);color:#ff4757;}
+.stock-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:4px 9px;font-size:11px;font-weight:800;color:var(--text2);background:var(--purple-dim);}
+.stock-out{color:#ff4757;border-color:rgba(255,71,87,.35);background:rgba(255,71,87,.08);}
+.add-btn:disabled,.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
+.detail-list{display:grid;gap:7px;margin:0;padding:0;list-style:none;}
+.detail-list li{border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text2);background:var(--card);font-size:13px;}
+.order-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.backup-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
 /* Products management */
 .products-mgmt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
 .mgmt-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
@@ -606,8 +614,8 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
   <div class="hero-content">
     <div class="hero-badge"><span class="badge-dot"></span>لسنا الوحيدون ولكننا نطمح لنكون الأفضل</div>
     <div class="hero-tagline">GEAR UP · PLAY HARD · WIN MORE</div>
-    <h1>ارتقِ<br/><em>بتجربتك</em><br/>التقنية</h1>
-    <p class="hero-sub">سماعات، معدات الألعاب، شاشات، مايكروفونات وكل ما تحتاجه — بأفضل الأسعار. توصيل سريع في عُمان، ودفع آمن مع ثواني.</p>
+    <h1 id="heroTitle">ارتقِ<br/><em>بتجربتك</em><br/>التقنية</h1>
+    <p class="hero-sub" id="heroSubtitle">سماعات، معدات الألعاب، شاشات، مايكروفونات وكل ما تحتاجه — بأفضل الأسعار. توصيل سريع في عُمان، ودفع آمن مع ثواني.</p>
     <div class="hero-actions">
       <a href="#products" class="btn-primary">تسوق الآن ←</a>
       <a href="#categories" class="btn-ghost">استعرض الفئات</a>
@@ -702,8 +710,9 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
       </div>
       <p id="footerDescription">لسنا الوحيدين ولكننا نطمح لنكون الأفضل. نوصل الجودة لبابك أينما كنت في السلطنة.</p>
       <div class="footer-social">
-        <a href="#" class="social-btn">𝕏</a><a href="#" class="social-btn">📸</a>
-        <a href="#" class="social-btn">📘</a><a href="#" class="social-btn">💬</a>
+        <a href="#" class="social-btn" id="socialWhatsApp" target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>
+        <a href="#" class="social-btn" id="socialInstagram" target="_blank" rel="noopener" aria-label="Instagram">📸</a>
+        <a href="#" class="social-btn" id="socialTikTok" target="_blank" rel="noopener" aria-label="TikTok">♪</a>
       </div>
     </div>
     <div class="footer-col"><h4>تسوق</h4><a href="#">سماعات</a><a href="#">معدات الألعاب</a><a href="#">شاشات</a><a href="#">مايكروفونات</a><a href="#">إكسسوارات</a></div>
@@ -840,6 +849,10 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
               <div class="form-group"><label class="form-label">سعر قبل الخصم (اختياري)</label><input class="form-input" id="newPOldPrice" type="number" step="0.001" placeholder="0.000"/></div>
             </div>
             <div class="form-row">
+              <div class="form-group"><label class="form-label">المخزون</label><input class="form-input" id="newPStock" type="number" min="0" step="1" value="1"/></div>
+              <div class="form-group"><label class="form-label">مدة التوصيل</label><input class="form-input" id="newPDeliveryTime" placeholder="مثال: خلال يومين"/></div>
+            </div>
+            <div class="form-row">
               <div class="form-group"><label class="form-label">الإيموجي</label><input class="form-input" id="newPEmoji" placeholder="🎧"/></div>
               <div class="form-group"><label class="form-label">الشارة</label>
                 <select class="form-select" id="newPBadge">
@@ -849,6 +862,11 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
               </div>
             </div>
             <div class="form-group"><label class="form-label">الوصف</label><input class="form-input" id="newPDesc" placeholder="وصف المنتج..."/></div>
+            <div class="form-group"><label class="form-label">المواصفات - كل سطر مواصفة</label><textarea class="form-input" id="newPSpecs" rows="3" placeholder="إلغاء ضوضاء نشط&#10;بطارية 30 ساعة"></textarea></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">محتويات العلبة - كل سطر عنصر</label><textarea class="form-input" id="newPBoxContents" rows="3" placeholder="السماعة&#10;كيبل الشحن"></textarea></div>
+              <div class="form-group"><label class="form-label">الضمان</label><input class="form-input" id="newPWarranty" placeholder="مثال: سنة واحدة"/></div>
+            </div>
             <div class="form-group">
               <label class="form-label">صور المنتج (اختياري)</label>
               <input type="file" id="newPImages" multiple accept="image/*" onchange="handleNewProductImages(event)" />
@@ -879,6 +897,10 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
               <div class="form-group"><label class="form-label">سعر قبل الخصم</label><input class="form-input" id="editPOldPrice" type="number" step="0.001"/></div>
             </div>
             <div class="form-row">
+              <div class="form-group"><label class="form-label">المخزون</label><input class="form-input" id="editPStock" type="number" min="0" step="1"/></div>
+              <div class="form-group"><label class="form-label">مدة التوصيل</label><input class="form-input" id="editPDeliveryTime"/></div>
+            </div>
+            <div class="form-row">
               <div class="form-group"><label class="form-label">الإيموجي</label><input class="form-input" id="editPEmoji"/></div>
               <div class="form-group"><label class="form-label">الشارة</label>
                 <select class="form-select" id="editPBadge">
@@ -888,6 +910,11 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
               </div>
             </div>
             <div class="form-group"><label class="form-label">الوصف</label><input class="form-input" id="editPDesc"/></div>
+            <div class="form-group"><label class="form-label">المواصفات - كل سطر مواصفة</label><textarea class="form-input" id="editPSpecs" rows="3"></textarea></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">محتويات العلبة - كل سطر عنصر</label><textarea class="form-input" id="editPBoxContents" rows="3"></textarea></div>
+              <div class="form-group"><label class="form-label">الضمان</label><input class="form-input" id="editPWarranty"/></div>
+            </div>
             <div class="form-group">
               <label class="form-label">صور المنتج</label>
               <input type="file" id="editPImagesFile" multiple accept="image/*" onchange="previewEditProductImages(event)" />
@@ -936,9 +963,17 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
           <div style="margin-bottom:10px;font-weight:800;color:#fff;">معلومات الموقع</div>
           <div class="form-group"><label class="form-label">اسم الموقع</label><input class="form-input" id="settingSiteName" value="رسال شوب"/></div>
           <div class="form-group"><label class="form-label">وصف الموقع في الفوتر</label><input class="form-input" id="settingSiteDescription" value="لسنا الوحيدين ولكننا نطمح لنكون الأفضل. نوصل الجودة لبابك أينما كنت في السلطنة."/></div>
+          <div class="form-group"><label class="form-label">عنوان الصفحة الرئيسية</label><input class="form-input" id="settingHeroTitle" value="ارتقِ بتجربتك التقنية"/></div>
+          <div class="form-group"><label class="form-label">وصف الصفحة الرئيسية</label><input class="form-input" id="settingHeroSubtitle" value="سماعات، معدات الألعاب، شاشات، مايكروفونات وكل ما تحتاجه - بأفضل الأسعار."/></div>
+          <div style="margin-top:10px;margin-bottom:10px;font-weight:800;color:#fff;">SEO ومشاركة الرابط</div>
+          <div class="form-group"><label class="form-label">عنوان المتصفح وGoogle</label><input class="form-input" id="settingSeoTitle" value="رسال شوب - متجر التقنية في عمان"/></div>
+          <div class="form-group"><label class="form-label">وصف Google وWhatsApp</label><input class="form-input" id="settingSeoDescription" value="متجر رسال شوب للتقنية، سماعات وشاشات وإكسسوارات مع توصيل سريع في عمان."/></div>
+          <div class="form-group"><label class="form-label">رابط صورة المشاركة (اختياري)</label><input class="form-input" id="settingSeoImage" placeholder="https://.../image.jpg" dir="ltr"/></div>
           <div style="margin-top:10px;margin-bottom:10px;font-weight:800;color:#fff;">معلومات التواصل والتوصيل</div>
           <div class="form-group"><label class="form-label">إيميل استقبال الطلبات</label><input class="form-input" id="settingEmail" value="orders@resal.om"/></div>
           <div class="form-group"><label class="form-label">رقم واتساب للإشعارات</label><input class="form-input" id="settingWA" value="+96890000000" dir="ltr"/></div>
+          <div class="form-group"><label class="form-label">رابط إنستغرام</label><input class="form-input" id="settingInstagram" placeholder="https://instagram.com/resal..." dir="ltr"/></div>
+          <div class="form-group"><label class="form-label">رابط تيك توك</label><input class="form-input" id="settingTikTok" placeholder="https://tiktok.com/@resal..." dir="ltr"/></div>
           <div class="form-group"><label class="form-label">سعر التوصيل (ر.ع)</label><input class="form-input" type="number" step="0.001" id="settingDelivery" value="1.500"/></div>
           <div style="margin-top:10px;font-weight:800;color:#fff;margin-bottom:8px;">ثواني (Thawani)</div>
           <div class="form-group"><label class="form-label">Thawani Enabled</label>
@@ -951,7 +986,10 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
             <div class="form-group"><label class="form-label">SMTP User</label><input class="form-input" id="settingSMTPUser" placeholder="user@example.com"/></div>
           </div>
           <div class="form-group"><label class="form-label">SMTP From</label><input class="form-input" id="settingSMTPFrom" placeholder="no-reply@example.com"/></div>
-          <button class="btn-primary" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+          <div class="backup-row">
+            <button class="btn-primary" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+            <button class="btn-ghost" onclick="downloadBackup()">⬇️ تنزيل نسخة احتياطية</button>
+          </div>
         </div>
       </div>
 
@@ -1001,9 +1039,16 @@ let currentUser = null;
 let settings = {
   siteName: 'رسال شوب',
   siteDescription: 'لسنا الوحيدين ولكننا نطمح لنكون الأفضل. نوصل الجودة لبابك أينما كنت في السلطنة.',
+  heroTitle: 'ارتقِ بتجربتك التقنية',
+  heroSubtitle: 'سماعات، معدات الألعاب، شاشات، مايكروفونات وكل ما تحتاجه - بأفضل الأسعار.',
+  seoTitle: 'رسال شوب - متجر التقنية في عمان',
+  seoDescription: 'متجر رسال شوب للتقنية، سماعات وشاشات وإكسسوارات مع توصيل سريع في عمان.',
+  seoImage: '',
   deliveryCost: 1.500,
   notifyEmail: 'orders@resal.om',
-  waNumber: '+96890000000'
+  waNumber: '+96890000000',
+  instagramUrl: '',
+  tiktokUrl: ''
 };
 
 const catLabels = {headphones:'سماعات',gaming:'ألعاب',screens:'شاشات',microphone:'مايكروفونات',accessories:'إكسسوارات',chairs:'كراسي وطاولات'};
@@ -1036,7 +1081,13 @@ function normalizeProductFromApi(p){
     rating: Number(p.rating || 5),
     reviews: Number(p.reviews || 0),
     desc: p.desc || p.description || '',
+    productDetails: p.productDetails || {},
+    specs: Array.isArray(p.specs) ? p.specs : (p.productDetails?.specs || []),
+    boxContents: Array.isArray(p.boxContents) ? p.boxContents : (p.productDetails?.boxContents || []),
+    warranty: p.warranty || p.productDetails?.warranty || '',
+    deliveryTime: p.deliveryTime || p.productDetails?.deliveryTime || '',
     images: Array.isArray(p.images) ? p.images : [],
+    stock: Number(p.stock || 0),
     price: Number(p.price || 0)
   };
 }
@@ -1070,14 +1121,44 @@ function applySettings(){
   if(id('footerLogoText')) id('footerLogoText').innerHTML=logoHtml(settings.siteName);
   if(id('footerDescription')) id('footerDescription').textContent=settings.siteDescription;
   if(id('footerCopyright')) id('footerCopyright').textContent=`© 2025 ${settings.siteName}. جميع الحقوق محفوظة. 🇴🇲 مسقط، سلطنة عُمان.`;
+  if(id('heroTitle')) id('heroTitle').innerHTML=esc(settings.heroTitle).replace(/\s+/g,'<br/>');
+  if(id('heroSubtitle')) id('heroSubtitle').textContent=settings.heroSubtitle;
+  document.title=settings.seoTitle||settings.siteName;
+  setMeta('description', settings.seoDescription || settings.siteDescription);
+  setMeta('og:title', settings.seoTitle || settings.siteName, 'property');
+  setMeta('og:description', settings.seoDescription || settings.siteDescription, 'property');
+  if(settings.seoImage) setMeta('og:image', settings.seoImage, 'property');
+  if(id('socialWhatsApp')) id('socialWhatsApp').href=`https://wa.me/${cleanPhone(settings.waNumber)}`;
+  if(id('socialInstagram')){
+    id('socialInstagram').href=settings.instagramUrl||'#';
+    id('socialInstagram').style.display=settings.instagramUrl?'inline-flex':'none';
+  }
+  if(id('socialTikTok')){
+    id('socialTikTok').href=settings.tiktokUrl||'#';
+    id('socialTikTok').style.display=settings.tiktokUrl?'inline-flex':'none';
+  }
+}
+
+function setMeta(name, content, attr='name'){
+  if(!content)return;
+  let el=document.querySelector(`meta[${attr}="${name}"]`);
+  if(!el){el=document.createElement('meta');el.setAttribute(attr,name);document.head.appendChild(el);}
+  el.setAttribute('content',content);
 }
 
 function fillSettingsForm(){
   if(!id('settingSiteName'))return;
   id('settingSiteName').value=settings.siteName;
   id('settingSiteDescription').value=settings.siteDescription;
+  id('settingHeroTitle').value=settings.heroTitle;
+  id('settingHeroSubtitle').value=settings.heroSubtitle;
+  id('settingSeoTitle').value=settings.seoTitle;
+  id('settingSeoDescription').value=settings.seoDescription;
+  id('settingSeoImage').value=settings.seoImage||'';
   id('settingEmail').value=settings.notifyEmail;
   id('settingWA').value=settings.waNumber;
+  id('settingInstagram').value=settings.instagramUrl||'';
+  id('settingTikTok').value=settings.tiktokUrl||'';
   id('settingDelivery').value=Number(settings.deliveryCost||0).toFixed(3);
 }
 
@@ -1095,8 +1176,15 @@ function loadSettings(){
       const s=normalizeSettingsPayload(j.settings||j.rows);
       settings.siteName=s.siteName||settings.siteName;
       settings.siteDescription=s.siteDescription||settings.siteDescription;
+      settings.heroTitle=s.heroTitle||settings.heroTitle;
+      settings.heroSubtitle=s.heroSubtitle||settings.heroSubtitle;
+      settings.seoTitle=s.seoTitle||settings.seoTitle;
+      settings.seoDescription=s.seoDescription||settings.seoDescription;
+      settings.seoImage=s.seoImage||settings.seoImage;
       settings.notifyEmail=s.notifyEmail||settings.notifyEmail;
       settings.waNumber=s.waNumber||settings.waNumber;
+      settings.instagramUrl=s.instagramUrl||settings.instagramUrl;
+      settings.tiktokUrl=s.tiktokUrl||settings.tiktokUrl;
       settings.deliveryCost=parseFloat(s.deliveryCost)||settings.deliveryCost;
       applySettings();
       fillSettingsForm();
@@ -1122,6 +1210,7 @@ function renderProducts(){
       <div class="product-info">
         <div class="product-category">${catLabel(p.cat)}</div>
         <div class="product-name">${p.name}</div>
+        <div style="margin-bottom:8px;"><span class="stock-pill ${Number(p.stock||0)<=0?'stock-out':''}">${Number(p.stock||0)>0?`متوفر: ${p.stock}`:'غير متوفر'}</span></div>
         <div class="product-rating">
           <span class="stars">${'★'.repeat(Math.round(p.rating))}${'☆'.repeat(5-Math.round(p.rating))}</span>
           <span class="rating-count">${p.rating} (${p.reviews.toLocaleString('ar')})</span>
@@ -1131,7 +1220,7 @@ function renderProducts(){
             ${p.oldPrice?`<span class="price-old">${omr(p.oldPrice)}</span>`:''}
             <span class="product-price">${omr(p.price)}</span>
           </div>
-          <button class="add-btn" onclick="event.stopPropagation();addToCart(${p.id})">أضف +</button>
+          <button class="add-btn" ${Number(p.stock||0)<=0?'disabled':''} onclick="event.stopPropagation();addToCart(${p.id})">${Number(p.stock||0)>0?'أضف +':'غير متوفر'}</button>
         </div>
       </div>
     </div>`).join('');
@@ -1197,6 +1286,11 @@ function onProductSwipeEnd(e){
   if(Math.abs(diff)>45) changeProductImage(diff>0?-1:1);
 }
 
+function renderDetailList(title, items){
+  if(!items || !items.length)return '';
+  return `<div class="detail-meta-item" style="grid-column:1/-1;"><div class="detail-meta-label">${esc(title)}</div><ul class="detail-list">${items.map(v=>`<li>${esc(v)}</li>`).join('')}</ul></div>`;
+}
+
 function renderProductDetails(){
   const p=products.find(x=>x.id===activeProductDetailsId); if(!p)return;
   const imgs=productImages(p);
@@ -1225,14 +1319,18 @@ function renderProductDetails(){
           <div class="detail-meta-item"><div class="detail-meta-label">الفئة</div><div class="detail-meta-value">${esc(catLabel(p.cat))}</div></div>
           <div class="detail-meta-item"><div class="detail-meta-label">عدد الصور</div><div class="detail-meta-value">${hasImgs?imgs.length:'بدون صور'}</div></div>
           <div class="detail-meta-item"><div class="detail-meta-label">التقييم</div><div class="detail-meta-value">${p.rating} / 5</div></div>
-          <div class="detail-meta-item"><div class="detail-meta-label">الحالة</div><div class="detail-meta-value">${p.badge?esc(p.badge):'متاح'}</div></div>
+          <div class="detail-meta-item"><div class="detail-meta-label">المخزون</div><div class="detail-meta-value">${Number(p.stock||0)>0?p.stock+' متاح':'غير متوفر'}</div></div>
+          <div class="detail-meta-item"><div class="detail-meta-label">الضمان</div><div class="detail-meta-value">${esc(p.warranty||'حسب سياسة المتجر')}</div></div>
+          <div class="detail-meta-item"><div class="detail-meta-label">التوصيل</div><div class="detail-meta-value">${esc(p.deliveryTime||'حسب المنطقة')}</div></div>
+          ${renderDetailList('المواصفات', p.specs)}
+          ${renderDetailList('محتويات العلبة', p.boxContents)}
         </div>
         <div class="detail-actions">
           <div>
             ${p.oldPrice?`<div class="price-old" style="margin-bottom:2px;">${omr(p.oldPrice)}</div>`:''}
             <div class="detail-price">${omr(p.price)}</div>
           </div>
-          <button class="btn-primary" onclick="addToCart(${p.id});closeProductDetails();">أضف للسلة +</button>
+          <button class="btn-primary" ${Number(p.stock||0)<=0?'disabled':''} onclick="addToCart(${p.id});closeProductDetails();">${Number(p.stock||0)>0?'أضف للسلة +':'غير متوفر'}</button>
         </div>
       </div>
     </div>`;
@@ -1241,8 +1339,12 @@ function renderProductDetails(){
 // ========================= CART =========================
 function addToCart(pid){
   const p=products.find(x=>x.id===pid);if(!p)return;
+  if(Number(p.stock||0)<=0){showToast('هذا المنتج غير متوفر حالياً','⚠️');return;}
   const ex=cart.find(x=>x.id===pid);
-  if(ex)ex.qty++;else cart.push({...p,qty:1});
+  if(ex){
+    if(ex.qty>=Number(p.stock||0)){showToast('وصلت للكمية المتاحة من هذا المنتج','⚠️');return;}
+    ex.qty++;
+  }else cart.push({...p,qty:1});
   updateCartUI();showToast(`${p.emoji} تمت إضافة ${p.name} للسلة`);
 }
 
@@ -1274,6 +1376,7 @@ function updateCartUI(){
 
 function chQty(pid,d){
   const item=cart.find(x=>x.id===pid);if(!item)return;
+  if(d>0 && item.qty>=Number(item.stock||0)){showToast('وصلت للكمية المتاحة من هذا المنتج','⚠️');return;}
   item.qty+=d;if(item.qty<=0)cart=cart.filter(x=>x.id!==pid);
   updateCartUI();
 }
@@ -1422,7 +1525,7 @@ function submitOrder(name,wilayat,area,phone,grand,paymentMethod='cod'){
   fetch(API_BASE+'/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
     name, wilayat, area, phone, items:order.items, delivery:order.delivery, deliveryCost:order.deliveryCost, total:order.total, payment:order.payment
   }),credentials:'include'}).then(r=>r.json()).then(j=>{
-    if(j && j.ok){ orders.unshift({...order, orderId:j.orderId}); showToast('تم إرسال الطلب للخادم ✅'); }
+    if(j && j.ok){ orders.unshift(j.order||{...order, orderId:j.orderId}); fetchProducts(); showToast('تم إرسال الطلب للخادم ✅'); }
     else { orders.unshift(order); showToast('تم إنشاء الطلب محلياً'); }
     showSuccessScreen(orderId,name); cart=[];updateCartUI(); updateNewOrdersBadge();
   }).catch(e=>{
@@ -1469,6 +1572,20 @@ function updateNewOrdersBadge(){
   const oc=id('ordersCount');if(oc)oc.textContent=orders.length;
 }
 
+function fetchOrders(){
+  fetch(API_BASE+'/orders',{credentials:'include'})
+    .then(r=>r.json())
+    .then(j=>{
+      if(j && j.orders){
+        orders=j.orders;
+        renderOrdersTable();
+        renderDashboard();
+        updateNewOrdersBadge();
+      }
+    })
+    .catch(e=>console.warn('Orders API failed', e));
+}
+
 // ========================= ADMIN AUTH =========================
 function showAdminLogin(){id('adminLoginOverlay').classList.add('open');}
 function closeAdminLogin(){id('adminLoginOverlay').classList.remove('open');}
@@ -1491,6 +1608,7 @@ function openAdmin(){
   renderDashboard();renderOrdersTable();
   // fetch fresh products from server
   fetchProducts();
+  fetchOrders();
   if(currentUser.role==='admin')renderModerators();
   updateNewOrdersBadge();
 }
@@ -1530,7 +1648,7 @@ function renderDashboard(){
 }
 
 function statusBadge(s,label){
-  const cls={new:'status-new',processing:'status-processing',shipped:'status-shipped',done:'status-done'};
+  const cls={new:'status-new',processing:'status-processing',shipped:'status-shipped',done:'status-done',cancelled:'status-cancelled'};
   return `<span class="order-status ${cls[s]||'status-new'}">${label||s}</span>`;
 }
 
@@ -1550,43 +1668,73 @@ function renderOrdersTable(){
     <td style="font-weight:700;color:var(--purple-bright);">${omr(o.total)}</td>
     <td>${o.delivery==='with'?'🚚 مع توصيل':'🏪 بدون توصيل'}</td>
     <td>${statusBadge(o.status,o.statusLabel)}</td>
-    <td>
+    <td><div class="order-actions">
+      <button class="mgmt-btn" onclick="openOrderWhatsApp('${o.id}')">واتساب</button>
       ${o.status==='new'?`<button class="mgmt-btn" onclick="processOrder('${o.id}')" style="background:rgba(255,140,0,.2);border-color:#ff8c00;color:#ff8c00;">⚙️ معالجة</button>`:''}
       ${o.status==='processing'?`<button class="ship-btn" onclick="shipOrder('${o.id}')">🚚 أرسل للشحن</button>`:''}
       ${o.status==='shipped'?`<button class="mgmt-btn" onclick="doneOrder('${o.id}')" style="background:rgba(0,229,160,.1);border-color:#00e5a0;color:#00e5a0;">✅ تسليم</button>`:''}
+      ${!['done','cancelled'].includes(o.status)?`<button class="mgmt-btn del" onclick="cancelOrder('${o.id}')">إلغاء</button>`:''}
       ${o.status==='done'?`<span style="color:var(--text3);font-size:12px;">مكتمل ✓</span>`:''}
-    </td>
+      ${o.status==='cancelled'?`<span style="color:#ff4757;font-size:12px;">ملغي</span>`:''}
+    </div></td>
   </tr>`).join('');
 }
 
+function setOrderStatus(oid,status,label){
+  const o=orders.find(x=>String(x.id)===String(oid));if(!o)return Promise.resolve(null);
+  return fetch(API_BASE+'/orders/'+encodeURIComponent(oid),{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({status}),
+    credentials:'include'
+  })
+    .then(r=>r.json())
+    .then(j=>{
+      if(j && j.success===false) throw new Error(j.error||'status failed');
+      o.status=status;o.statusLabel=label;
+      renderOrdersTable();renderDashboard();updateNewOrdersBadge();
+      return o;
+    })
+    .catch(e=>{
+      console.warn('Order status update failed',e);
+      showToast('تعذر تحديث حالة الطلب في الخادم','⚠️');
+      return null;
+    });
+}
+
 function processOrder(oid){
-  const o=orders.find(x=>x.id===oid);if(!o)return;
-  o.status='processing';o.statusLabel='قيد المعالجة';
-  renderOrdersTable();renderDashboard();
-  showToast(`طلب ${oid} — قيد المعالجة ⚙️`,'⚙️');
+  setOrderStatus(oid,'processing','قيد التجهيز').then(o=>{if(o)showToast(`طلب ${oid} — قيد التجهيز ⚙️`,'⚙️');});
 }
 
 function shipOrder(oid){
   const o=orders.find(x=>x.id===oid);if(!o)return;
-  o.status='shipped';o.statusLabel='تم الشحن';
-  // Simulate WhatsApp notification
-  const waMsg=encodeURIComponent(`مرحباً ${o.name}! 🎮\n\nطلبك من رسال شوب (${oid}) تم إرساله للشحن عبر رسال.\nسيصلك قريباً 🚚\n\nشكراً لتسوقك معنا! 💜`);
-  console.log(`📱 واتساب → ${o.phone}: تم شحن الطلب ${oid}`);
-  renderOrdersTable();renderDashboard();
-  showToast(`تم إرسال ${oid} للشحن — إشعار واتساب أُرسل 📱`,'🚚');
-  // Open WhatsApp simulation
-  setTimeout(()=>{
-    if(confirm(`سيتم إرسال إشعار واتساب للزبون على الرقم ${o.phone}.\n\nهل تريد فتح واتساب الآن؟`)){
-      window.open(`https://wa.me/${o.phone.replace('+','')}?text=${waMsg}`,'_blank');
-    }
-  },500);
+  setOrderStatus(oid,'shipped','تم الشحن').then(updated=>{
+    if(!updated)return;
+    showToast(`تم إرسال ${oid} للشحن 🚚`,'🚚');
+    openOrderWhatsApp(oid,'shipping');
+  });
 }
 
 function doneOrder(oid){
-  const o=orders.find(x=>x.id===oid);if(!o)return;
-  o.status='done';o.statusLabel='مكتمل';
-  renderOrdersTable();renderDashboard();
-  showToast(`طلب ${oid} — مكتمل ✅`);
+  setOrderStatus(oid,'done','مكتمل').then(o=>{if(o)showToast(`طلب ${oid} — مكتمل ✅`);});
+}
+
+function cancelOrder(oid){
+  if(!confirm('هل تريد إلغاء هذا الطلب؟'))return;
+  setOrderStatus(oid,'cancelled','ملغي').then(o=>{if(o)showToast(`طلب ${oid} — ملغي`,'⚠️');});
+}
+
+function cleanPhone(phone){
+  return String(phone||'').replace(/[^\d]/g,'');
+}
+
+function openOrderWhatsApp(oid,type='followup'){
+  const o=orders.find(x=>String(x.id)===String(oid));if(!o)return;
+  const items=(o.items||[]).map(i=>`${i.name} × ${i.qty||1}`).join('، ');
+  const msg=type==='shipping'
+    ? `مرحباً ${o.name}، طلبك من رسال شوب (${oid}) تم إرساله للشحن. طلباتك ستصل لك سريعاً.`
+    : `مرحباً ${o.name}، بخصوص طلبك من رسال شوب (${oid}): ${items}. الإجمالي ${omr(Number(o.total||0))}.`;
+  window.open(`https://wa.me/${cleanPhone(o.phone)}?text=${encodeURIComponent(msg)}`,'_blank');
 }
 
 // ========================= PRODUCTS MGMT =========================
@@ -1598,6 +1746,7 @@ function renderProductsMgmt(){
       <div class="mgmt-card-info">
         <div class="mgmt-card-name">${p.name}</div>
         <div class="mgmt-card-price">${omr(p.price)}</div>
+        <div style="margin:6px 0;"><span class="stock-pill ${Number(p.stock||0)<=0?'stock-out':''}">${Number(p.stock||0)>0?`المخزون: ${p.stock}`:'غير متوفر'}</span></div>
         <div class="mgmt-actions">
           <button class="mgmt-btn" onclick="showEditProductForm(${p.id})">✏️ تعديل</button>
           <button class="mgmt-btn del" onclick="deleteProduct(${p.id})">🗑️ حذف</button>
@@ -1628,9 +1777,14 @@ function showEditProductForm(pid){
   id('editPCat').value=p.cat||'accessories';
   id('editPPrice').value=p.price||'';
   id('editPOldPrice').value=p.oldPrice||'';
+  id('editPStock').value=p.stock||0;
+  id('editPDeliveryTime').value=p.deliveryTime||'';
   id('editPEmoji').value=p.emoji||'';
   id('editPBadge').value=p.badge||'';
   id('editPDesc').value=p.desc||'';
+  id('editPSpecs').value=(p.specs||[]).join('\n');
+  id('editPBoxContents').value=(p.boxContents||[]).join('\n');
+  id('editPWarranty').value=p.warranty||'';
   id('editPImagesFile').value='';
   const imgs=productImages(p);
   id('editPCurrentImages').innerHTML=imgs.length
@@ -1666,13 +1820,19 @@ function saveEditedProduct(){
   const cat=id('editPCat').value;
   const price=parseFloat(id('editPPrice').value);
   const oldP=id('editPOldPrice').value ? parseFloat(id('editPOldPrice').value) : '';
+  const stock=parseInt(id('editPStock').value)||0;
   const emoji=id('editPEmoji').value||'📦';
   const badge=id('editPBadge').value||'';
   const desc=id('editPDesc').value.trim();
   if(!name||!price){showToast('يرجى إدخال الاسم والسعر','⚠️');return;}
   const form=new FormData();
   form.append('name',name); form.append('cat',cat); form.append('price',price); form.append('oldPrice',oldP);
+  form.append('stock',stock);
   form.append('emoji',emoji); form.append('badge',badge); form.append('desc',desc);
+  form.append('specs',id('editPSpecs').value);
+  form.append('boxContents',id('editPBoxContents').value);
+  form.append('warranty',id('editPWarranty').value);
+  form.append('deliveryTime',id('editPDeliveryTime').value);
   const files=id('editPImagesFile').files;
   for(let i=0;i<files.length;i++) form.append('images',files[i]);
   fetch(API_BASE+'/products/'+pid,{method:'PUT',body:form,credentials:'include'})
@@ -1697,6 +1857,7 @@ function addNewProduct(){
   const cat=id('newPCat').value;
   const price=parseFloat(id('newPPrice').value);
   const oldP=parseFloat(id('newPOldPrice').value)||null;
+  const stock=parseInt(id('newPStock').value)||0;
   const emoji=id('newPEmoji').value||'📦';
   const badge=id('newPBadge').value||null;
   const desc=id('newPDesc').value.trim();
@@ -1705,13 +1866,18 @@ function addNewProduct(){
   // Try to POST to server with form data
   const form = new FormData();
   form.append('name',name); form.append('cat',cat); form.append('price',price); form.append('oldPrice',oldP||'');
+  form.append('stock',stock);
   form.append('emoji',emoji); form.append('badge',badge||''); form.append('desc',desc||'');
+  form.append('specs',id('newPSpecs').value);
+  form.append('boxContents',id('newPBoxContents').value);
+  form.append('warranty',id('newPWarranty').value);
+  form.append('deliveryTime',id('newPDeliveryTime').value);
   const files = document.getElementById('newPImages').files;
   for(let i=0;i<files.length;i++) form.append('images', files[i]);
   fetch(API_BASE+'/products',{method:'POST',body:form,credentials:'include'}).then(r=>r.json()).then(j=>{
     if(j && j.ok){ showToast('تم إضافة المنتج إلى الخادم ✅'); fetchProducts(); }
     else throw new Error('server');
-    id('newPName').value='';id('newPPrice').value='';id('newPOldPrice').value='';id('newPEmoji').value='';id('newPDesc').value='';
+    id('newPName').value='';id('newPPrice').value='';id('newPOldPrice').value='';id('newPStock').value='1';id('newPDeliveryTime').value='';id('newPEmoji').value='';id('newPDesc').value='';id('newPSpecs').value='';id('newPBoxContents').value='';id('newPWarranty').value='';
     newProductImages=[]; updateNewProductPreview(); id('newPImages').value=''; hideAddProductForm();
   }).catch(e=>{
     console.warn('Create product failed', e);
@@ -1781,16 +1947,30 @@ function removeMod(email){
 function saveSettings(){
   settings.siteName=id('settingSiteName').value.trim()||'رسال شوب';
   settings.siteDescription=id('settingSiteDescription').value.trim()||settings.siteDescription;
+  settings.heroTitle=id('settingHeroTitle').value.trim()||settings.heroTitle;
+  settings.heroSubtitle=id('settingHeroSubtitle').value.trim()||settings.heroSubtitle;
+  settings.seoTitle=id('settingSeoTitle').value.trim()||settings.seoTitle;
+  settings.seoDescription=id('settingSeoDescription').value.trim()||settings.seoDescription;
+  settings.seoImage=id('settingSeoImage').value.trim();
   settings.notifyEmail=id('settingEmail').value;
   settings.waNumber=id('settingWA').value;
+  settings.instagramUrl=id('settingInstagram').value.trim();
+  settings.tiktokUrl=id('settingTikTok').value.trim();
   settings.deliveryCost=parseFloat(id('settingDelivery').value)||1.500;
   applySettings();
   // Post to server settings (admin only)
   const payload = {
     siteName: settings.siteName,
     siteDescription: settings.siteDescription,
+    heroTitle: settings.heroTitle,
+    heroSubtitle: settings.heroSubtitle,
+    seoTitle: settings.seoTitle,
+    seoDescription: settings.seoDescription,
+    seoImage: settings.seoImage,
     notifyEmail: settings.notifyEmail,
     waNumber: settings.waNumber,
+    instagramUrl: settings.instagramUrl,
+    tiktokUrl: settings.tiktokUrl,
     deliveryCost: settings.deliveryCost,
     thawani_enabled: id('settingThawaniEnabled').value,
     thawani_mode: id('settingThawaniMode').value,
@@ -1802,6 +1982,25 @@ function saveSettings(){
   fetch(API_BASE+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),credentials:'include'})
     .then(r=>r.json()).then(j=>{ if(j.ok||j.success) showToast('تم حفظ الإعدادات ✅'); else showToast('فشل حفظ الإعدادات','⚠️'); })
     .catch(e=>{ showToast('تعذر حفظ الإعدادات في الخادم','⚠️'); });
+}
+
+function downloadBackup(){
+  fetch(API_BASE+'/backup',{credentials:'include'})
+    .then(async r=>{
+      if(!r.ok) throw new Error('backup failed');
+      const data=await r.json();
+      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=`resal-backup-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('تم تنزيل النسخة الاحتياطية ✅');
+    })
+    .catch(()=>showToast('تعذر تنزيل النسخة الاحتياطية','⚠️'));
 }
 
 // Password reset UI
