@@ -209,6 +209,8 @@ function normalizeOrder(row) {
     items,
     total: Number(row.total ?? row.total_price ?? 0),
     deliveryCost: Number(row.deliveryCost ?? row.delivery_cost ?? 0),
+    vatRate: Number(row.vatRate ?? row.vat_rate ?? 0),
+    vatAmount: Number(row.vatAmount ?? row.vat_amount ?? 0),
     statusLabel: statusLabels[row.status] || row.status,
     statusLabel: row.status === 'new' ? 'جديد' : row.status
     , statusLabel: statusLabels[row.status] || row.status
@@ -522,7 +524,7 @@ router.get('/orders', async (req, res) => {
 
 router.post('/orders', async (req, res) => {
   try {
-    const { name, wilayat, area, phone, items, delivery, deliveryCost, total, totalPrice, payment } = req.body;
+    const { name, wilayat, area, phone, items, delivery, deliveryCost, vatRate, vatAmount, total, totalPrice, payment } = req.body;
 
     if (!name || !wilayat || !area || !phone || !items) {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
@@ -553,9 +555,11 @@ router.post('/orders', async (req, res) => {
       items: orderItems,
       delivery: delivery || 'without',
       deliveryCost: parseFloat(deliveryCost) || 0,
+      vatRate: parseFloat(vatRate) || 0,
+      vatAmount: parseFloat(vatAmount) || 0,
       total: parseFloat(total ?? totalPrice) || 0,
       status: 'new',
-      payment: payment || 'cod',
+      payment: payment || 'thawani',
       proof: null
     };
 

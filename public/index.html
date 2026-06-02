@@ -1020,6 +1020,7 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
           <div class="form-group"><label class="form-label">رابط إنستغرام</label><input class="form-input" id="settingInstagram" placeholder="https://instagram.com/resal..." dir="ltr"/></div>
           <div class="form-group"><label class="form-label">رابط تيك توك</label><input class="form-input" id="settingTikTok" placeholder="https://tiktok.com/@resal..." dir="ltr"/></div>
           <div class="form-group"><label class="form-label">سعر التوصيل (ر.ع)</label><input class="form-input" type="number" step="0.001" id="settingDelivery" value="1.500"/></div>
+          <div class="form-group"><label class="form-label">القيمة المضافة (%)</label><input class="form-input" type="number" step="0.1" min="0" id="settingVatRate" value="5"/></div>
           <div style="margin-top:10px;font-weight:800;color:#fff;margin-bottom:8px;">ثواني (Thawani)</div>
           <div class="form-group"><label class="form-label">Thawani Enabled</label>
             <select class="form-select" id="settingThawaniEnabled"><option value="false">false</option><option value="true">true</option></select></div>
@@ -1095,6 +1096,7 @@ let settings = {
   seoDescription: 'متجر رسال شوب للتقنية، سماعات وشاشات وإكسسوارات مع توصيل سريع في عمان.',
   seoImage: '',
   deliveryCost: 1.500,
+  vatRate: 5,
   notifyEmail: 'orders@resal.om',
   waNumber: '+96890000000',
   instagramUrl: '',
@@ -1106,6 +1108,12 @@ const catLabels = {headphones:'سماعات',gaming:'ألعاب',screens:'شاش
 // ========================= HELPERS =========================
 function omr(n){ return n.toFixed(3)+' ر.ع'; }
 function id(x){ return document.getElementById(x); }
+function calcVat(amount){ return amount * (Number(settings.vatRate||0) / 100); }
+function calcOrderTotals(base, delivery){
+  const taxable=Number(base||0)+Number(delivery||0);
+  const vat=calcVat(taxable);
+  return {base:Number(base||0), delivery:Number(delivery||0), vat, grand:taxable+vat};
+}
 function showToast(msg, icon='✅'){
   id('toastIcon').textContent=icon;
   id('toastMsg').textContent=msg;
@@ -1210,6 +1218,7 @@ function fillSettingsForm(){
   id('settingInstagram').value=settings.instagramUrl||'';
   id('settingTikTok').value=settings.tiktokUrl||'';
   id('settingDelivery').value=Number(settings.deliveryCost||0).toFixed(3);
+  id('settingVatRate').value=Number(settings.vatRate||0);
 }
 
 function normalizeSettingsPayload(data){
@@ -1236,6 +1245,7 @@ function loadSettings(){
       settings.instagramUrl=s.instagramUrl||settings.instagramUrl;
       settings.tiktokUrl=s.tiktokUrl||settings.tiktokUrl;
       settings.deliveryCost=parseFloat(s.deliveryCost)||settings.deliveryCost;
+      settings.vatRate=s.vatRate!==undefined?parseFloat(s.vatRate):settings.vatRate;
       applySettings();
       fillSettingsForm();
     })
@@ -1472,6 +1482,7 @@ function closeOrderModal(){id('orderOverlay').classList.remove('open');}
 
 function renderOrderStep1(){
   const cartTotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const totals=calcOrderTotals(cartTotal, settings.deliveryCost);
   id('orderModalContent').innerHTML=`
     <div class="order-steps">
       <div class="step active"><div class="step-circle">1</div><div class="step-label">بياناتك</div></div>
@@ -1513,7 +1524,8 @@ function renderOrderStep1(){
     <div class="price-summary" id="priceSummary">
       <div class="price-row"><span>سعر المنتجات</span><span>${omr(cartTotal)}</span></div>
       <div class="price-row" id="deliveryRow"><span>رسوم التوصيل</span><span>${omr(settings.deliveryCost)}</span></div>
-      <div class="price-row total-row"><span>الإجمالي</span><span id="grandTotal">${omr(cartTotal+settings.deliveryCost)}</span></div>
+      <div class="price-row" id="vatRow"><span>القيمة المضافة (${Number(settings.vatRate||0)}%)</span><span id="vatTotal">${omr(totals.vat)}</span></div>
+      <div class="price-row total-row"><span>الإجمالي</span><span id="grandTotal">${omr(totals.grand)}</span></div>
     </div>
     <button class="btn-primary" style="width:100%;justify-content:center;" onclick="goToStep2()">التالي — طريقة الدفع ←</button>`;
 }
@@ -1525,10 +1537,13 @@ function selectDelivery(v){
   id('dOpt2').classList.toggle('selected',v==='without');
   const base=cart.reduce((s,i)=>s+i.price*i.qty,0);
   const del=v==='with'?settings.deliveryCost:0;
+  const totals=calcOrderTotals(base,del);
   const drow=id('deliveryRow');
   if(drow) drow.style.display=v==='with'?'flex':'none';
+  const vat=id('vatTotal');
+  if(vat) vat.textContent=omr(totals.vat);
   const gt=id('grandTotal');
-  if(gt) gt.textContent=omr(base+del);
+  if(gt) gt.textContent=omr(totals.grand);
 }
 
 function goToStep2(){
@@ -1540,7 +1555,8 @@ function goToStep2(){
 
   const cartTotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
   const deliveryCost=deliveryChoice==='with'?settings.deliveryCost:0;
-  const grand=cartTotal+deliveryCost;
+  const totals=calcOrderTotals(cartTotal,deliveryCost);
+  const grand=totals.grand;
 
   // Render payment step without receipt upload — Thawani-ready
   id('orderModalContent').innerHTML=`
@@ -1552,14 +1568,13 @@ function goToStep2(){
     <div style="font-weight:800;font-size:16px;color:#fff;margin-bottom:16px;">💳 إتمام الدفع</div>
     <div class="checkout-note" style="margin-bottom:20px;">
       <span>💜</span>
-      <span>ادفع الآن عبر ثواني (مستقبلاً) أو اختر الدفع عند الاستلام</span>
+      <span>أكملي الدفع بأمان عبر ثواني.</span>
     </div>
     <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:20px;margin-bottom:20px;">
       <div style="font-weight:800;color:#fff;margin-bottom:12px;">💜 بوابة الدفع - ثواني (جاهز للتكوين)</div>
       <div style="font-size:14px;color:var(--text2);margin-bottom:8px;">الوضع: ${thawaniConfig.enabled?thawaniConfig.mode+' (مفعل)':'غير مفعل — أضف مفاتيح ثواني في الإعدادات'}</div>
       <div style="display:flex;gap:8px;margin-top:8px;">
         <button class="btn-primary" onclick="initiateThawani(${grand},'${name}','${wilayat}','${area}','${phone}')">⬈ ادفع عبر ثواني — ${omr(grand)}</button>
-        <button class="btn-ghost" onclick="submitOrder('${name}','${wilayat}','${area}','${phone}',${grand},'cod')">🏷️ دفع عند الاستلام</button>
       </div>
     </div>
     <div style="display:flex;gap:10px;">
@@ -1580,12 +1595,17 @@ function updateNewProductPreview(){
   const container=id('newPPreview'); if(!container)return; container.innerHTML=newProductImages.map(src=>`<img src="${src}" style="max-width:80px;margin-left:6px;border-radius:8px;"/>`).join('');
 }
 
-function submitOrder(name,wilayat,area,phone,grand,paymentMethod='cod'){
+function submitOrder(name,wilayat,area,phone,grand,paymentMethod='thawani'){
   const orderId=genOrderId();
+  const cartTotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const deliveryCost=deliveryChoice==='with'?settings.deliveryCost:0;
+  const totals=calcOrderTotals(cartTotal,deliveryCost);
   const order={
     id:orderId, name, wilayat, area, phone,
     items:[...cart], delivery:deliveryChoice,
-    deliveryCost:deliveryChoice==='with'?settings.deliveryCost:0,
+    deliveryCost,
+    vatRate:Number(settings.vatRate||0),
+    vatAmount:totals.vat,
     total:grand, status:'new', statusLabel:'جديد',
     payment: paymentMethod,
     date:new Date().toLocaleDateString('ar-OM'),
@@ -1594,7 +1614,7 @@ function submitOrder(name,wilayat,area,phone,grand,paymentMethod='cod'){
   };
   // Try server first
   fetch(API_BASE+'/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-    name, wilayat, area, phone, items:order.items, delivery:order.delivery, deliveryCost:order.deliveryCost, total:order.total, payment:order.payment
+    name, wilayat, area, phone, items:order.items, delivery:order.delivery, deliveryCost:order.deliveryCost, vatRate:order.vatRate, vatAmount:order.vatAmount, total:order.total, payment:order.payment
   }),credentials:'include'}).then(r=>r.json()).then(j=>{
     if(j && j.ok){
       order.id=j.orderId||j.order?.id||orderId;
@@ -1883,11 +1903,12 @@ function orderInvoiceText(oid){
     `الهاتف: ${o.phone}`,
     `العنوان: ${o.wilayat} / ${o.area}`,
     `الحالة: ${o.statusLabel||o.status}`,
-    `الدفع: ${o.payment||'cod'}`,
+    `الدفع: ${o.payment||'thawani'}`,
     '',
     'المنتجات:',
     items,
     '',
+    `القيمة المضافة (${Number(o.vatRate||settings.vatRate||0)}%): ${omr(Number(o.vatAmount||0))}`,
     `الإجمالي: ${omr(Number(o.total||0))}`
   ].join('\n');
 }
@@ -2125,6 +2146,7 @@ function saveSettings(){
   settings.instagramUrl=id('settingInstagram').value.trim();
   settings.tiktokUrl=id('settingTikTok').value.trim();
   settings.deliveryCost=parseFloat(id('settingDelivery').value)||1.500;
+  settings.vatRate=parseFloat(id('settingVatRate').value)||0;
   applySettings();
   // Post to server settings (admin only)
   const payload = {
@@ -2140,6 +2162,7 @@ function saveSettings(){
     instagramUrl: settings.instagramUrl,
     tiktokUrl: settings.tiktokUrl,
     deliveryCost: settings.deliveryCost,
+    vatRate: settings.vatRate,
     thawani_enabled: id('settingThawaniEnabled').value,
     thawani_mode: id('settingThawaniMode').value,
     smtp_host: id('settingSMTPHost').value,
