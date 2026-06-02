@@ -434,6 +434,12 @@ footer{background:var(--bg2);border-top:1px solid var(--border2);
 .detail-list li{border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text2);background:var(--card);font-size:13px;}
 .order-actions{display:flex;gap:6px;flex-wrap:wrap;}
 .backup-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.product-tools,.admin-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px;}
+.tool-input,.tool-select{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:11px 13px;color:var(--text);font-family:'Tajawal',sans-serif;font-weight:700;min-height:42px;}
+.tool-input{min-width:min(100%,260px);flex:1;}
+.tool-select{min-width:160px;}
+.track-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-top:14px;color:var(--text2);line-height:1.8;}
+.invoice-preview{white-space:pre-wrap;direction:rtl;text-align:right;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;font-size:13px;color:var(--text2);}
 /* Products management */
 .products-mgmt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
 .mgmt-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
@@ -592,6 +598,7 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
     <a href="#deals">العروض</a>
     <a href="#shipping">الشحن</a>
     <a href="#contact">تواصل</a>
+    <a href="#" onclick="openTrackOrder();return false;">تتبع الطلب</a>
   </div>
   <div class="nav-right">
     <button class="nav-cart" onclick="openCart()">🛒 السلة <span class="cart-count" id="cartCount">0</span></button>
@@ -606,6 +613,7 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
   <a href="#deals" onclick="closeMenu()">🔥 العروض</a>
   <a href="#shipping" onclick="closeMenu()">🚚 الشحن</a>
   <a href="#contact" onclick="closeMenu()">📧 تواصل معنا</a>
+  <a href="#" onclick="closeMenu();openTrackOrder();return false;">🔎 تتبع الطلب</a>
 </div>
 
 <!-- HERO -->
@@ -654,6 +662,16 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
       <h2 class="section-title" id="productsSectionTitle">كل المنتجات</h2>
     </div>
     <div class="products-summary"><span class="products-count" id="productsCount">0</span><span>منتج متاح</span></div>
+  </div>
+  <div class="product-tools">
+    <input class="tool-input" id="productSearch" placeholder="ابحث عن منتج..." oninput="setProductSearch(this.value)"/>
+    <select class="tool-select" id="productSort" onchange="setProductSort(this.value)">
+      <option value="default">الترتيب الافتراضي</option>
+      <option value="newest">الأحدث</option>
+      <option value="priceAsc">السعر: الأقل أولاً</option>
+      <option value="priceDesc">السعر: الأعلى أولاً</option>
+      <option value="rating">الأعلى تقييماً</option>
+    </select>
   </div>
   <div class="product-grid" id="productGrid"></div>
 </section>
@@ -758,6 +776,22 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
   </div>
 </div>
 
+<!-- ===== ORDER TRACKING ===== -->
+<div class="overlay" id="trackOrderOverlay">
+  <div class="modal-box" style="max-width:520px;">
+    <div class="modal-header">
+      <h3>🔎 تتبع الطلب</h3>
+      <button class="close-btn" onclick="closeTrackOrder()">✕</button>
+    </div>
+    <div class="modal-body-pad">
+      <div class="form-group"><label class="form-label">رقم الطلب</label><input class="form-input" id="trackOrderId" placeholder="RS-..." dir="ltr"/></div>
+      <div class="form-group"><label class="form-label">رقم الهاتف</label><input class="form-input" id="trackPhone" placeholder="+968..." dir="ltr"/></div>
+      <button class="btn-primary" style="width:100%;justify-content:center;" onclick="trackOrder()">تتبع الطلب</button>
+      <div id="trackResult"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== ADMIN LOGIN ===== -->
 <div class="overlay" id="adminLoginOverlay">
   <div class="modal-box" style="max-width:420px;">
@@ -815,6 +849,17 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
       <div class="admin-tab" id="tab-orders">
         <div class="section-tag" style="margin-bottom:.5rem;">إدارة</div>
         <h2 class="section-title" style="margin-bottom:1.5rem;">الطلبات <span id="ordersCount" class="notif-badge" style="font-size:14px;padding:4px 10px;"></span></h2>
+        <div class="admin-tools">
+          <input class="tool-input" id="adminOrderSearch" placeholder="ابحث برقم الطلب، الاسم، الهاتف..." oninput="setAdminOrderSearch(this.value)"/>
+          <select class="tool-select" id="adminOrderStatus" onchange="setAdminOrderStatus(this.value)">
+            <option value="all">كل الحالات</option>
+            <option value="new">جديد</option>
+            <option value="processing">قيد التجهيز</option>
+            <option value="shipped">تم الشحن</option>
+            <option value="done">مكتمل</option>
+            <option value="cancelled">ملغي</option>
+          </select>
+        </div>
         <div style="overflow-x:auto;">
           <table class="orders-table" id="ordersTable">
             <thead><tr>
@@ -985,6 +1030,7 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
             <div class="form-group"><label class="form-label">SMTP Port</label><input class="form-input" id="settingSMTPPort" placeholder="587"/></div>
             <div class="form-group"><label class="form-label">SMTP User</label><input class="form-input" id="settingSMTPUser" placeholder="user@example.com"/></div>
           </div>
+          <div class="form-group"><label class="form-label">SMTP Password / App Password</label><input class="form-input" id="settingSMTPPass" type="password" placeholder="••••••••"/></div>
           <div class="form-group"><label class="form-label">SMTP From</label><input class="form-input" id="settingSMTPFrom" placeholder="no-reply@example.com"/></div>
           <div class="backup-row">
             <button class="btn-primary" onclick="saveSettings()">💾 حفظ الإعدادات</button>
@@ -1024,10 +1070,14 @@ let products = [
 // ========================= STATE =========================
 let cart = [];
 let activeFilter = 'all';
+let productSearch = '';
+let productSort = 'default';
 let currentOrderStep = 1;
 // Thawani-ready configuration (fill keys later)
 let thawaniConfig = { enabled: false, mode: 'test', publicKey: '', secretKey: '' };
 let orders = [];
+let adminOrderSearch = '';
+let adminOrderStatus = 'all';
 let nextOrderId = 1001;
 let activeProductDetailsId = null;
 let activeProductImageIndex = 0;
@@ -1194,7 +1244,18 @@ function loadSettings(){
 
 function renderProducts(){
   const grid=id('productGrid');
-  const filtered=activeFilter==='all'?products:products.filter(p=>p.cat===activeFilter);
+  const query=productSearch.trim().toLowerCase();
+  let filtered=activeFilter==='all'?products:products.filter(p=>p.cat===activeFilter);
+  if(query){
+    filtered=filtered.filter(p=>[p.name,p.desc,catLabel(p.cat)].join(' ').toLowerCase().includes(query));
+  }
+  filtered=[...filtered].sort((a,b)=>{
+    if(productSort==='priceAsc')return a.price-b.price;
+    if(productSort==='priceDesc')return b.price-a.price;
+    if(productSort==='rating')return (b.rating||0)-(a.rating||0);
+    if(productSort==='newest')return Number(b.id||0)-Number(a.id||0);
+    return 0;
+  });
   const title = activeFilter==='all' ? 'كل المنتجات' : catLabel(activeFilter);
   const tag = activeFilter==='all' ? 'تسوق حسب الفئة' : 'منتجات ' + catLabel(activeFilter);
   if(id('productsSectionTitle')) id('productsSectionTitle').textContent = title;
@@ -1224,6 +1285,16 @@ function renderProducts(){
         </div>
       </div>
     </div>`).join('');
+}
+
+function setProductSearch(value){
+  productSearch=value||'';
+  renderProducts();
+}
+
+function setProductSort(value){
+  productSort=value||'default';
+  renderProducts();
 }
 
 function filterProducts(cat,btn){
@@ -1525,9 +1596,14 @@ function submitOrder(name,wilayat,area,phone,grand,paymentMethod='cod'){
   fetch(API_BASE+'/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
     name, wilayat, area, phone, items:order.items, delivery:order.delivery, deliveryCost:order.deliveryCost, total:order.total, payment:order.payment
   }),credentials:'include'}).then(r=>r.json()).then(j=>{
-    if(j && j.ok){ orders.unshift(j.order||{...order, orderId:j.orderId}); fetchProducts(); showToast('تم إرسال الطلب للخادم ✅'); }
+    if(j && j.ok){
+      order.id=j.orderId||j.order?.id||orderId;
+      orders.unshift(j.order||{...order, orderId:j.orderId});
+      fetchProducts();
+      showToast('تم إرسال الطلب للخادم ✅');
+    }
     else { orders.unshift(order); showToast('تم إنشاء الطلب محلياً'); }
-    showSuccessScreen(orderId,name); cart=[];updateCartUI(); updateNewOrdersBadge();
+    showSuccessScreen(order.id,name); cart=[];updateCartUI(); updateNewOrdersBadge();
   }).catch(e=>{
     console.warn('Order API failed',e); orders.unshift(order); showSuccessScreen(orderId,name); cart=[];updateCartUI(); updateNewOrdersBadge();
   });
@@ -1561,8 +1637,50 @@ function showSuccessScreen(orderId,name){
         📧 تم إرسال تأكيد الطلب على إيميل المتجر<br/>
         🚚 التوصيل عبر شركة رسال للشحن المحلي
       </div>
-      <button class="btn-primary" style="justify-content:center;" onclick="closeOrderModal()">العودة للمتجر ←</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <button class="btn-primary" style="justify-content:center;" onclick="closeOrderModal()">العودة للمتجر ←</button>
+        <button class="btn-ghost" onclick="prefillTrackOrder('${orderId}')">تتبع الطلب</button>
+        <a class="btn-ghost" href="https://wa.me/${cleanPhone(settings.waNumber)}?text=${encodeURIComponent('مرحباً، أريد متابعة طلبي رقم '+orderId)}" target="_blank" rel="noopener">واتساب المتجر</a>
+      </div>
     </div>`;
+}
+
+function openTrackOrder(){
+  id('trackOrderOverlay').classList.add('open');
+}
+
+function closeTrackOrder(){
+  id('trackOrderOverlay').classList.remove('open');
+}
+
+function prefillTrackOrder(orderId){
+  closeOrderModal();
+  openTrackOrder();
+  id('trackOrderId').value=orderId;
+}
+
+function trackOrder(){
+  const orderId=id('trackOrderId').value.trim();
+  const phone=id('trackPhone').value.trim();
+  const result=id('trackResult');
+  if(!orderId||!phone){showToast('أدخلي رقم الطلب ورقم الهاتف','⚠️');return;}
+  result.innerHTML='<div class="track-card">جاري البحث...</div>';
+  fetch(`${API_BASE}/orders/track?orderId=${encodeURIComponent(orderId)}&phone=${encodeURIComponent(phone)}`)
+    .then(r=>r.json())
+    .then(j=>{
+      if(!j.success)throw new Error(j.error||'not found');
+      const o=j.order;
+      result.innerHTML=`
+        <div class="track-card">
+          <div style="font-weight:900;color:var(--text);font-size:16px;margin-bottom:8px;">${esc(o.id)}</div>
+          <div>الحالة: ${statusBadge(o.status,o.statusLabel)}</div>
+          <div>الاسم: ${esc(o.name)}</div>
+          <div>العنوان: ${esc(o.wilayat)} / ${esc(o.area)}</div>
+          <div>الإجمالي: ${omr(Number(o.total||0))}</div>
+          <div style="margin-top:8px;">${(o.items||[]).map(i=>`${esc(i.name)} × ${i.qty||1}`).join('<br/>')}</div>
+        </div>`;
+    })
+    .catch(()=>{result.innerHTML='<div class="track-card" style="color:#ff4757;">لم يتم العثور على الطلب. تأكدي من رقم الطلب ورقم الهاتف.</div>';});
 }
 
 function updateNewOrdersBadge(){
@@ -1656,8 +1774,14 @@ function statusBadge(s,label){
 function renderOrdersTable(){
   updateNewOrdersBadge();
   const tbody=id('ordersTableBody');
-  if(!orders.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem;">لا توجد طلبات بعد.</td></tr>';return;}
-  tbody.innerHTML=orders.map(o=>`<tr>
+  const q=adminOrderSearch.trim().toLowerCase();
+  const filtered=orders.filter(o=>{
+    const statusOk=adminOrderStatus==='all'||o.status===adminOrderStatus;
+    const text=[o.id,o.name,o.phone,o.wilayat,o.area,(o.items||[]).map(i=>i.name).join(' ')].join(' ').toLowerCase();
+    return statusOk && (!q || text.includes(q));
+  });
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem;">لا توجد طلبات مطابقة.</td></tr>';return;}
+  tbody.innerHTML=filtered.map(o=>`<tr>
     <td style="font-weight:700;color:var(--purple-bright);">${o.id}</td>
     <td>
       <div style="font-weight:700;">${o.name}</div>
@@ -1670,6 +1794,8 @@ function renderOrdersTable(){
     <td>${statusBadge(o.status,o.statusLabel)}</td>
     <td><div class="order-actions">
       <button class="mgmt-btn" onclick="openOrderWhatsApp('${o.id}')">واتساب</button>
+      <button class="mgmt-btn" onclick="copyOrderInvoice('${o.id}')">نسخ</button>
+      <button class="mgmt-btn" onclick="printOrderInvoice('${o.id}')">طباعة</button>
       ${o.status==='new'?`<button class="mgmt-btn" onclick="processOrder('${o.id}')" style="background:rgba(255,140,0,.2);border-color:#ff8c00;color:#ff8c00;">⚙️ معالجة</button>`:''}
       ${o.status==='processing'?`<button class="ship-btn" onclick="shipOrder('${o.id}')">🚚 أرسل للشحن</button>`:''}
       ${o.status==='shipped'?`<button class="mgmt-btn" onclick="doneOrder('${o.id}')" style="background:rgba(0,229,160,.1);border-color:#00e5a0;color:#00e5a0;">✅ تسليم</button>`:''}
@@ -1678,6 +1804,16 @@ function renderOrdersTable(){
       ${o.status==='cancelled'?`<span style="color:#ff4757;font-size:12px;">ملغي</span>`:''}
     </div></td>
   </tr>`).join('');
+}
+
+function setAdminOrderSearch(value){
+  adminOrderSearch=value||'';
+  renderOrdersTable();
+}
+
+function setAdminOrderStatus(value){
+  adminOrderStatus=value||'all';
+  renderOrdersTable();
 }
 
 function setOrderStatus(oid,status,label){
@@ -1735,6 +1871,38 @@ function openOrderWhatsApp(oid,type='followup'){
     ? `مرحباً ${o.name}، طلبك من رسال شوب (${oid}) تم إرساله للشحن. طلباتك ستصل لك سريعاً.`
     : `مرحباً ${o.name}، بخصوص طلبك من رسال شوب (${oid}): ${items}. الإجمالي ${omr(Number(o.total||0))}.`;
   window.open(`https://wa.me/${cleanPhone(o.phone)}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+
+function orderInvoiceText(oid){
+  const o=orders.find(x=>String(x.id)===String(oid));if(!o)return '';
+  const items=(o.items||[]).map(i=>`- ${i.name} × ${i.qty||1} = ${omr(Number(i.price||0)*Number(i.qty||1))}`).join('\n');
+  return [
+    `${settings.siteName}`,
+    `فاتورة طلب: ${o.id}`,
+    `الزبون: ${o.name}`,
+    `الهاتف: ${o.phone}`,
+    `العنوان: ${o.wilayat} / ${o.area}`,
+    `الحالة: ${o.statusLabel||o.status}`,
+    `الدفع: ${o.payment||'cod'}`,
+    '',
+    'المنتجات:',
+    items,
+    '',
+    `الإجمالي: ${omr(Number(o.total||0))}`
+  ].join('\n');
+}
+
+function copyOrderInvoice(oid){
+  const text=orderInvoiceText(oid); if(!text)return;
+  navigator.clipboard?.writeText(text).then(()=>showToast('تم نسخ الفاتورة ✅')).catch(()=>showToast('تعذر النسخ','⚠️'));
+}
+
+function printOrderInvoice(oid){
+  const text=orderInvoiceText(oid); if(!text)return;
+  const w=window.open('','_blank','width=720,height=800');
+  w.document.write(`<html dir="rtl"><head><title>فاتورة ${oid}</title><style>body{font-family:Arial,sans-serif;padding:32px;line-height:1.8;white-space:pre-wrap;color:#111}</style></head><body>${esc(text)}</body></html>`);
+  w.document.close();
+  w.print();
 }
 
 // ========================= PRODUCTS MGMT =========================
@@ -1977,6 +2145,7 @@ function saveSettings(){
     smtp_host: id('settingSMTPHost').value,
     smtp_port: id('settingSMTPPort').value,
     smtp_user: id('settingSMTPUser').value,
+    smtp_pass: id('settingSMTPPass').value,
     smtp_from: id('settingSMTPFrom').value
   };
   fetch(API_BASE+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),credentials:'include'})

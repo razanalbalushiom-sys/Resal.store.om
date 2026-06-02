@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const session = require('express-session');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
+const nodemailer = require('nodemailer');
 
 const router = express.Router();
 
@@ -256,6 +257,59 @@ function buildProductDetails(body) {
     warranty: String(body.warranty || '').trim(),
     deliveryTime: String(body.deliveryTime || '').trim()
   };
+}
+
+async function getSettingsMap() {
+  const rows = await supabase.select('settings', '');
+  const settings = {};
+  for (const row of rows || []) {
+    settings[row.key] = row.value;
+  }
+  return settings;
+}
+
+function orderText(order) {
+  const items = (order.items || [])
+    .map(item => `${item.name || item.id} x ${item.qty || 1}`)
+    .join(', ');
+  return [
+    `Order: ${order.order_id}`,
+    `Customer: ${order.customer_name}`,
+    `Phone: ${order.phone}`,
+    `Address: ${order.wilayat} / ${order.area}`,
+    `Items: ${items}`,
+    `Delivery: ${order.delivery}`,
+    `Payment: ${order.payment}`,
+    `Total: ${order.total}`
+  ].join('\n');
+}
+
+async function notifyNewOrder(order) {
+  try {
+    const settings = await getSettingsMap();
+    if (!settings.smtp_host || !settings.smtp_user || !settings.notifyEmail) return false;
+
+    const transporter = nodemailer.createTransport({
+      host: settings.smtp_host,
+      port: Number(settings.smtp_port || 587),
+      secure: Number(settings.smtp_port || 587) === 465,
+      auth: {
+        user: settings.smtp_user,
+        pass: settings.smtp_pass || process.env.SMTP_PASS || ''
+      }
+    });
+
+    await transporter.sendMail({
+      from: settings.smtp_from || settings.smtp_user,
+      to: settings.notifyEmail,
+      subject: `New Resal order ${order.order_id}`,
+      text: orderText(order)
+    });
+    return true;
+  } catch (error) {
+    console.warn('Order notification failed:', error.message);
+    return false;
+  }
 }
 
 function isPasswordMatch(password, storedPassword) {
@@ -518,9 +572,50 @@ router.post('/orders', async (req, res) => {
         await supabase.update('products', productId, { stock: Math.max(0, stock - qty) });
       }
     }
+    notifyNewOrder(result[0]).catch(error => console.warn('Order notification failed:', error.message));
     res.json({ success: true, ok: true, orderId, order: normalizeOrder(result[0]) });
   } catch (error) {
     console.error('Create order error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/orders/track', async (req, res) => {
+  try {
+    const orderId = String(req.query.orderId || '').trim();
+    const phone = String(req.query.phone || '').replace(/[^\d]/g, '');
+
+    if (!orderId || !phone) {
+      return res.status(400).json({ success: false, error: 'Order ID and phone are required' });
+    }
+
+    const rows = await supabase.select('orders', `?order_id=eq.${encodeURIComponent(orderId)}`);
+    const order = rows && rows[0];
+    const orderPhone = String(order?.phone || '').replace(/[^\d]/g, '');
+
+    if (!order || !orderPhone.endsWith(phone.slice(-8))) {
+      return res.status(404).json({ success: false, error: 'Order not found' });
+    }
+
+    const normalized = normalizeOrder(order);
+    res.json({
+      success: true,
+      order: {
+        id: normalized.id,
+        name: normalized.name,
+        wilayat: normalized.wilayat,
+        area: normalized.area,
+        items: normalized.items,
+        total: normalized.total,
+        status: normalized.status,
+        statusLabel: normalized.statusLabel,
+        delivery: normalized.delivery,
+        payment: normalized.payment,
+        created_at: normalized.created_at
+      }
+    });
+  } catch (error) {
+    console.error('Track order error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
