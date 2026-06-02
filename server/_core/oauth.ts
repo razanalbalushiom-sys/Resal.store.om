@@ -2,7 +2,6 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
-import { sdk } from "./sdk";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -10,7 +9,13 @@ function getQueryParam(req: Request, key: string): string | undefined {
 }
 
 export function registerOAuthRoutes(app: Express) {
+  if (!process.env.OAUTH_SERVER_URL) {
+    console.log("[OAuth] Disabled: OAUTH_SERVER_URL is not configured.");
+    return;
+  }
+
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
+    const { sdk } = await import("./sdk");
     const code = getQueryParam(req, "code");
     const state = getQueryParam(req, "state");
 
