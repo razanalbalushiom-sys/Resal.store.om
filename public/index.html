@@ -2465,7 +2465,7 @@ function openAdmin(){
   // fetch fresh products from server
   fetchProducts();
   fetchOrders();
-  if(currentUser.role==='admin')renderModerators();
+  if(currentUser.role==='admin')fetchModerators();
   updateNewOrdersBadge();
 }
 function closeAdmin(){id('adminPanel').classList.remove('open');}
@@ -2478,7 +2478,7 @@ function adminTab(tab,btn){
   if(btn)btn.classList.add('active');
   if(tab==='orders')renderOrdersTable();
   if(tab==='products')renderProductsMgmt();
-  if(tab==='moderators')renderModerators();
+  if(tab==='moderators')fetchModerators();
   if(tab==='dashboard')renderDashboard();
 }
 
@@ -2939,6 +2939,92 @@ function removeMod(email){
   if(!confirm('هل تريد حذف هذا الموظف؟'))return;
   accounts=accounts.filter(a=>a.email!==email);
   renderModerators();showToast('تم حذف الموظف 🗑️','🗑️');
+}
+
+function roleLabel(role){
+  return role==='admin'?'مدير رئيسي':role==='moderator'?'مشرف':'موظف';
+}
+
+function fetchModerators(){
+  if(currentUser?.role!=='admin')return;
+  const list=id('modList');
+  if(list)list.innerHTML='<div style="color:var(--text3);padding:1rem;">جاري تحميل الموظفين...</div>';
+  fetch(API_BASE+'/users',{credentials:'include'})
+    .then(r=>r.json())
+    .then(j=>{
+      if(!j.success)throw new Error(j.error||'users failed');
+      accounts=(j.users||[]).map(u=>({...u, emoji:'👤'}));
+      renderModerators();
+    })
+    .catch(e=>{
+      console.warn('Fetch users failed',e);
+      if(list)list.innerHTML='<div style="color:var(--red);padding:1rem;">تعذر تحميل الموظفين.</div>';
+    });
+}
+
+function renderModerators(){
+  const list=id('modList');
+  if(!list)return;
+  if(!accounts.length){
+    list.innerHTML='<div style="color:var(--text3);padding:1rem;">لا يوجد موظفون بعد.</div>';
+    return;
+  }
+  list.innerHTML=accounts.map(a=>`
+    <div class="mod-item">
+      <div class="mod-info">
+        <div class="mod-avatar">${a.emoji||'👤'}</div>
+        <div>
+          <div class="mod-name">${esc(a.name||'بدون اسم')}</div>
+          <div class="mod-email">${esc(a.email||'')}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="mod-role">${roleLabel(a.role)}</span>
+        ${a.role!=='admin'?`<button class="mgmt-btn del" onclick="removeMod('${esc(a.id)}','${esc(a.email)}')">حذف</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function addModerator(){
+  const name=id('newModName').value.trim();
+  const email=id('newModEmail').value.trim().toLowerCase();
+  const pass=id('newModPass').value;
+  const role=id('newModRole').value;
+  if(!name||!email||!pass){showToast('يرجى تعبئة جميع الحقول','⚠️');return;}
+  if(accounts.find(a=>a.email===email)){showToast('هذا البريد مسجل مسبقاً','⚠️');return;}
+  fetch(API_BASE+'/users',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name,email,password:pass,role}),
+    credentials:'include'
+  })
+    .then(r=>r.json())
+    .then(j=>{
+      if(!j.success)throw new Error(j.error||'create user failed');
+      id('newModName').value='';id('newModEmail').value='';id('newModPass').value='';
+      showToast(`تم إضافة ${name} كـ${roleLabel(role)} ✅`);
+      fetchModerators();
+    })
+    .catch(e=>{
+      console.warn('Create user failed',e);
+      showToast(e.message==='Email already exists'?'هذا البريد مسجل مسبقاً':'تعذر حفظ الموظف في قاعدة البيانات','⚠️');
+    });
+}
+
+function removeMod(userId,email){
+  if(!confirm('هل تريد حذف هذا الموظف؟'))return;
+  fetch(API_BASE+'/users/'+encodeURIComponent(userId),{method:'DELETE',credentials:'include'})
+    .then(r=>r.json())
+    .then(j=>{
+      if(!j.success)throw new Error(j.error||'delete user failed');
+      accounts=accounts.filter(a=>String(a.id)!==String(userId));
+      renderModerators();
+      showToast(`تم حذف ${email||'الموظف'} 🗑️`,'🗑️');
+    })
+    .catch(e=>{
+      console.warn('Delete user failed',e);
+      showToast('تعذر حذف الموظف من قاعدة البيانات','⚠️');
+    });
 }
 
 // ========================= SETTINGS =========================

@@ -423,6 +423,86 @@ router.post('/logout', (req, res) => {
   });
 });
 
+// ============ STAFF USERS ============
+
+router.get('/users', async (req, res) => {
+  try {
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Admin only' });
+    }
+
+    const users = await supabase.select('users', '?select=id,email,name,role,created_at&order=id.asc');
+    res.json({ success: true, users: users || [] });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/users', async (req, res) => {
+  try {
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Admin only' });
+    }
+
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const name = String(req.body.name || '').trim();
+    const password = String(req.body.password || '');
+    const role = ['admin', 'moderator', 'employee'].includes(req.body.role) ? req.body.role : 'employee';
+
+    if (!email || !name || !password) {
+      return res.status(400).json({ success: false, error: 'Name, email, and password are required' });
+    }
+
+    const existing = await supabase.select('users', `?email=eq.${encodeURIComponent(email)}&select=id`);
+    if (existing && existing.length) {
+      return res.status(409).json({ success: false, error: 'Email already exists' });
+    }
+
+    const passwordHash = bcrypt.hashSync(password, 10);
+    const inserted = await supabase.insert('users', {
+      email,
+      name,
+      role,
+      password: passwordHash
+    });
+    const user = inserted && inserted[0];
+    res.json({
+      success: true,
+      ok: true,
+      user: user ? { id: user.id, email: user.email, name: user.name, role: user.role, created_at: user.created_at } : null
+    });
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.delete('/users/:id', async (req, res) => {
+  try {
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Admin only' });
+    }
+
+    const { id } = req.params;
+    if (String(id) === String(req.session.userId)) {
+      return res.status(400).json({ success: false, error: 'Cannot delete your own account' });
+    }
+
+    const rows = await supabase.select('users', `?id=eq.${encodeURIComponent(id)}&select=id,role`);
+    const user = rows && rows[0];
+    if (user?.role === 'admin') {
+      return res.status(400).json({ success: false, error: 'Cannot delete admin account' });
+    }
+
+    await supabase.delete('users', id);
+    res.json({ success: true, ok: true });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ============ PRODUCTS ============
 
 router.get('/products', async (req, res) => {
