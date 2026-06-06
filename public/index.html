@@ -1423,6 +1423,14 @@ function logoHtml(name){
   return `${esc(parts.join(' '))} <span>${esc(last)}</span>`;
 }
 
+function heroTitleHtml(title){
+  const words=String(title||'ارتقِ بتجربتك التقنية').trim().split(/\s+/).filter(Boolean);
+  if(!words.length)return '';
+  const highlightIndex=words.findIndex(word=>/تجرب/.test(word));
+  const index=highlightIndex>=0 ? highlightIndex : Math.min(1, words.length-1);
+  return words.map((word,i)=>`${i===index?`<em>${esc(word)}</em>`:esc(word)}`).join('<br/>');
+}
+
 function parseServices(value){
   if(Array.isArray(value))return value;
   if(!value)return settings.services || [];
@@ -1508,7 +1516,7 @@ function applySettings(){
   if(id('footerLogoText')) id('footerLogoText').innerHTML=logoHtml(settings.siteName);
   if(id('footerDescription')) id('footerDescription').textContent=settings.siteDescription;
   if(id('footerCopyright')) id('footerCopyright').textContent=`© 2025 ${settings.siteName}. جميع الحقوق محفوظة. 🇴🇲 مسقط، سلطنة عُمان.`;
-  if(id('heroTitle')) id('heroTitle').innerHTML=esc(settings.heroTitle).replace(/\s+/g,'<br/>');
+  if(id('heroTitle')) id('heroTitle').innerHTML=heroTitleHtml(settings.heroTitle);
   if(id('heroSubtitle')) id('heroSubtitle').textContent=settings.heroSubtitle;
   document.title=settings.seoTitle||settings.siteName;
   setMeta('description', settings.seoDescription || settings.siteDescription);
