@@ -103,7 +103,6 @@ async function startServer() {
   // Serve uploaded files
   const uploadDir = path.resolve(process.cwd(), process.env.UPLOAD_DIR || 'public/uploads');
   app.use('/uploads', express.static(uploadDir, {
-    fallthrough: false,
     maxAge: isProd ? '7d' : 0,
   }));
 

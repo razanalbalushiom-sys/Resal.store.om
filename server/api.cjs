@@ -217,6 +217,11 @@ async function saveImageBuffer(file) {
   return supabase.uploadImage(file.buffer, safeUploadName(file.originalname), file.mimetype);
 }
 
+function isRenderableProductImage(src) {
+  const value = String(src || '').trim();
+  return /^https?:\/\//i.test(value) && !value.includes('/uploads/');
+}
+
 function normalizeOrder(row) {
   if (!row) return row;
   const items = typeof row.items === 'string' ? JSON.parse(row.items || '[]') : (row.items || []);
@@ -245,11 +250,12 @@ function normalizeOrder(row) {
 
 function normalizeProduct(row) {
   if (!row) return row;
-  const images = typeof row.images === 'string' ? JSON.parse(row.images || '[]') : (row.images || []);
+  const rawImages = typeof row.images === 'string' ? JSON.parse(row.images || '[]') : (row.images || []);
+  const images = rawImages.filter(isRenderableProductImage);
   const productDetails = typeof row.product_details === 'string'
     ? JSON.parse(row.product_details || '{}')
     : (row.product_details || {});
-  const firstImage = row.image_url ? [row.image_url] : [];
+  const firstImage = isRenderableProductImage(row.image_url) ? [row.image_url] : [];
   return {
     ...row,
     cat: row.cat || row.category || '',
@@ -422,7 +428,7 @@ router.get('/products', async (req, res) => {
   }
 });
 
-router.post('/products', upload.any(), async (req, res) => {
+router.post('/products', upload.array('images', 8), async (req, res) => {
   try {
     if (req.session.userRole !== 'admin') {
       return res.status(403).json({ success: false, error: 'Admin only' });
@@ -466,7 +472,7 @@ router.post('/products', upload.any(), async (req, res) => {
   }
 });
 
-router.put('/products/:id', upload.any(), async (req, res) => {
+router.put('/products/:id', upload.array('images', 8), async (req, res) => {
   try {
     if (req.session.userRole !== 'admin') {
       return res.status(403).json({ success: false, error: 'Admin only' });
