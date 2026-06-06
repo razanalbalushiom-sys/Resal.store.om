@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>رسال شوب — لسنا الوحيدين ولكننا نطمح لنكون الأفضل</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900;1000&family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Chakra+Petch:wght@500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -14,9 +14,9 @@
   --purple-bright:#a78bfa;--purple-glow:#8b5cf640;--purple-dim:#8b5cf615;
   --text:#f0eeff;--text2:#9d8ec4;--text3:#5a4d80;
   --red:#ff4757;--green:#00e5a0;--orange:#ff8c00;
-  --font-ar:'Cairo','IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;
-  --font-display:'Cairo','IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif;
-  --font-tech:'Chakra Petch','Cairo',sans-serif;
+  --font-ar:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif;
+  --font-display:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif;
+  --font-tech:'Chakra Petch','Tajawal',sans-serif;
   --r:12px;--r2:8px;--r3:16px;
 }
 html{scroll-behavior:smooth;}
@@ -2259,7 +2259,7 @@ function copyOrderInvoice(oid){
 function printOrderInvoice(oid){
   const text=orderInvoiceText(oid); if(!text)return;
   const w=window.open('','_blank','width=720,height=800');
-  w.document.write(`<html dir="rtl"><head><title>فاتورة ${oid}</title><style>body{font-family:Cairo,'IBM Plex Sans Arabic',Arial,sans-serif;padding:32px;line-height:1.8;white-space:pre-wrap;color:#111}</style></head><body>${esc(text)}</body></html>`);
+  w.document.write(`<html dir="rtl"><head><title>فاتورة ${oid}</title><style>body{font-family:Tajawal,Arial,sans-serif;padding:32px;line-height:1.8;white-space:pre-wrap;color:#111}</style></head><body>${esc(text)}</body></html>`);
   w.document.close();
   w.print();
 }
