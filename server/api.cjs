@@ -272,6 +272,7 @@ function normalizeProduct(row) {
     warranty: productDetails.warranty || '',
     deliveryTime: productDetails.deliveryTime || '',
     images: images.length ? images : firstImage,
+    isActive: row.is_active !== false && row.isActive !== false,
     stock: Number(row.stock || 0),
     price: Number(row.price || 0)
   };
@@ -291,6 +292,10 @@ function buildProductDetails(body) {
     warranty: String(body.warranty || '').trim(),
     deliveryTime: String(body.deliveryTime || '').trim()
   };
+}
+
+function hasProductDetailsInput(body) {
+  return ['specs', 'boxContents', 'warranty', 'deliveryTime'].some(key => Object.prototype.hasOwnProperty.call(body || {}, key));
 }
 
 async function getSettingsMap() {
@@ -414,12 +419,14 @@ router.post('/logout', (req, res) => {
 router.get('/products', async (req, res) => {
   try {
     const category = req.query.category;
-    
-    let filter = '';
+    const isStaff = req.session?.userRole === 'admin' || req.session?.userRole === 'moderator';
+    const filters = [];
     if (category) {
-      filter = `?category=eq.${encodeURIComponent(category)}`;
+      filters.push(`category=eq.${encodeURIComponent(category)}`);
     }
+    if (!isStaff) filters.push('is_active=eq.true');
 
+    const filter = filters.length ? `?${filters.join('&')}` : '';
     const products = await supabase.select('products', filter);
     res.json({ success: true, products: (products || []).map(normalizeProduct) });
   } catch (error) {
@@ -434,7 +441,7 @@ router.post('/products', upload.array('images', 8), async (req, res) => {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
 
-    const { name, description, price, category, cat, stock, oldPrice, emoji, badge, desc } = req.body;
+    const { name, description, price, category, cat, stock, oldPrice, emoji, badge, desc, isActive, is_active } = req.body;
     
     if (!name || !price) {
       return res.status(400).json({ success: false, error: 'Name and price required' });
@@ -461,7 +468,8 @@ router.post('/products', upload.array('images', 8), async (req, res) => {
       stock: parseInt(stock) || 0,
       product_details: buildProductDetails(req.body),
       image_url: images[0] || null,
-      images
+      images,
+      is_active: isActive !== 'false' && is_active !== 'false'
     };
 
     const result = await supabase.insert('products', product);
@@ -479,7 +487,7 @@ router.put('/products/:id', upload.array('images', 8), async (req, res) => {
     }
 
     const { id } = req.params;
-    const { name, description, price, category, cat, stock, oldPrice, emoji, badge, desc } = req.body;
+    const { name, description, price, category, cat, stock, oldPrice, emoji, badge, desc, isActive, is_active } = req.body;
 
     const updates = {};
     if (name) updates.name = name;
@@ -498,13 +506,19 @@ router.put('/products/:id', upload.array('images', 8), async (req, res) => {
       updates.badgeType = badge === 'جديد' ? 'badge-new' : badge === 'خصم' ? 'badge-sale' : badge === 'ساخن' ? 'badge-hot' : '';
     }
 
+    if (isActive !== undefined || is_active !== undefined) {
+      updates.is_active = isActive !== 'false' && is_active !== 'false';
+    }
+
     if (req.files && req.files.length) {
       const images = await Promise.all(req.files.map(file => saveImageBuffer(file)));
       updates.image_url = images[0];
       updates.images = images;
     }
 
-    updates.product_details = buildProductDetails(req.body);
+    if (hasProductDetailsInput(req.body)) {
+      updates.product_details = buildProductDetails(req.body);
+    }
 
     const result = await supabase.update('products', id, updates);
     res.json({ success: true, ok: true, product: normalizeProduct(result[0]) });
