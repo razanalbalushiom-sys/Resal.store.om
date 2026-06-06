@@ -147,7 +147,7 @@ class SupabaseClient {
 const supabase = new SupabaseClient();
 
 function isAdminRole(role) {
-  return role === 'admin';
+  return role === 'admin' || role === 'moderator';
 }
 
 function isOrderStaffRole(role) {
@@ -155,7 +155,7 @@ function isOrderStaffRole(role) {
 }
 
 function isProductStaffRole(role) {
-  return ['admin', 'employee'].includes(role);
+  return isAdminRole(role) || role === 'employee';
 }
 
 // Initialize API
@@ -439,7 +439,7 @@ router.post('/logout', (req, res) => {
 
 router.get('/users', async (req, res) => {
   try {
-    if (req.session.userRole !== 'admin') {
+    if (!isAdminRole(req.session.userRole)) {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
 
@@ -453,7 +453,7 @@ router.get('/users', async (req, res) => {
 
 router.post('/users', async (req, res) => {
   try {
-    if (req.session.userRole !== 'admin') {
+    if (!isAdminRole(req.session.userRole)) {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
 
@@ -492,7 +492,7 @@ router.post('/users', async (req, res) => {
 
 router.delete('/users/:id', async (req, res) => {
   try {
-    if (req.session.userRole !== 'admin') {
+    if (!isAdminRole(req.session.userRole)) {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
 
@@ -520,7 +520,7 @@ router.delete('/users/:id', async (req, res) => {
 router.get('/products', async (req, res) => {
   try {
     const category = req.query.category;
-    const isStaff = isProductStaffRole(req.session?.userRole) || req.session?.userRole === 'moderator';
+    const isStaff = isProductStaffRole(req.session?.userRole);
     const filters = [];
     if (category) {
       filters.push(`category=eq.${encodeURIComponent(category)}`);
@@ -648,7 +648,7 @@ router.delete('/products/:id', async (req, res) => {
 
 router.post('/uploads/image', upload.single('image'), async (req, res) => {
   try {
-    if (req.session.userRole !== 'admin') {
+    if (!isAdminRole(req.session.userRole)) {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
     if (!req.file) {
@@ -832,7 +832,7 @@ router.get('/settings', async (req, res) => {
 
 router.post('/settings', async (req, res) => {
   try {
-    if (req.session.userRole !== 'admin') {
+    if (!isAdminRole(req.session.userRole)) {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
 
@@ -862,7 +862,7 @@ router.post('/settings', async (req, res) => {
 
 router.get('/backup', async (req, res) => {
   try {
-    if (req.session.userRole !== 'admin') {
+    if (!isAdminRole(req.session.userRole)) {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
 

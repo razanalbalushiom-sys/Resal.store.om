@@ -780,6 +780,141 @@ body[data-theme="light"] .service-card{background:rgba(255,255,255,.56);border-c
 .service-image{width:100%;aspect-ratio:16/9;border-radius:8px;overflow:hidden;margin-bottom:14px;border:1px solid rgba(250,204,21,.24);background:rgba(0,0,0,.24);}
 .service-image img{width:100%;height:100%;object-fit:cover;display:block;}
 .service-upload-preview{width:96px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--border2);background:rgba(0,0,0,.18);}
+.admin-overlay{
+  --admin-bg:#080806;
+  --admin-panel:#0f0f0a;
+  --admin-card:rgba(18,18,12,.94);
+  --admin-card2:rgba(28,26,16,.92);
+  --admin-border:rgba(250,204,21,.24);
+  --admin-border2:rgba(250,204,21,.42);
+  --admin-text:#fffdf2;
+  --admin-muted:#d9d1ae;
+  --admin-soft:#9f946a;
+  --admin-accent:#facc15;
+  background:
+    radial-gradient(circle at 85% 0%,rgba(250,204,21,.14),transparent 28%),
+    radial-gradient(circle at 15% 100%,rgba(124,58,237,.12),transparent 30%),
+    var(--admin-bg)!important;
+  color:var(--admin-text)!important;
+}
+.admin-overlay::before{
+  content:'';position:absolute;inset:64px 0 0;pointer-events:none;opacity:.18;
+  background:
+    radial-gradient(circle at 6px 6px,rgba(250,204,21,.38) 1px,transparent 1.5px),
+    linear-gradient(120deg,transparent 0 48%,rgba(250,204,21,.12) 49%,transparent 50% 100%);
+  background-size:34px 34px,100% 100%;
+}
+.admin-overlay .admin-nav{
+  background:rgba(6,6,4,.98)!important;
+  border-bottom:1px solid var(--admin-border2)!important;
+  box-shadow:0 14px 40px rgba(0,0,0,.42);
+  position:relative;z-index:2;
+}
+.admin-overlay .admin-nav h2,
+.admin-overlay .section-title,
+.admin-overlay .mgmt-card-name,
+.admin-overlay .mod-name{color:var(--admin-text)!important;}
+.admin-overlay .admin-layout{position:relative;z-index:1;}
+.admin-overlay .admin-sidebar{
+  background:rgba(8,8,5,.96)!important;
+  border-left:1px solid rgba(250,204,21,.16)!important;
+  box-shadow:18px 0 45px rgba(0,0,0,.25);
+}
+.admin-overlay .admin-content{
+  background:linear-gradient(180deg,rgba(12,12,8,.92),rgba(8,8,6,.96))!important;
+  color:var(--admin-text)!important;
+}
+.admin-overlay .sidebar-btn{
+  color:var(--admin-muted)!important;
+  border-color:transparent!important;
+}
+.admin-overlay .sidebar-btn:hover,
+.admin-overlay .sidebar-btn.active{
+  color:var(--admin-accent)!important;
+  background:rgba(250,204,21,.11)!important;
+  border-color:rgba(250,204,21,.34)!important;
+  box-shadow:0 12px 34px rgba(250,204,21,.09)!important;
+}
+.admin-overlay .section-tag,
+.admin-overlay .product-category,
+.admin-overlay .detail-category{color:var(--admin-accent)!important;}
+.admin-overlay .stat-card,
+.admin-overlay .orders-table,
+.admin-overlay .mgmt-card,
+.admin-overlay .mod-item,
+.admin-overlay .add-product-form,
+.admin-overlay .admin-mini-panel{
+  background:var(--admin-card)!important;
+  border-color:var(--admin-border)!important;
+  color:var(--admin-text)!important;
+  box-shadow:0 22px 60px rgba(0,0,0,.32)!important;
+}
+.admin-overlay .orders-table{
+  border-collapse:separate;
+  border-spacing:0;
+  overflow:hidden;
+}
+.admin-overlay .orders-table th{
+  background:rgba(250,204,21,.09)!important;
+  color:var(--admin-soft)!important;
+  border-bottom:1px solid var(--admin-border)!important;
+}
+.admin-overlay .orders-table td{
+  background:rgba(20,20,13,.86)!important;
+  color:var(--admin-text)!important;
+  border-bottom:1px solid rgba(250,204,21,.12)!important;
+}
+.admin-overlay .orders-table tr:nth-child(even) td{background:rgba(28,26,16,.86)!important;}
+.admin-overlay .orders-table tr:hover td{background:rgba(250,204,21,.09)!important;}
+.admin-overlay .tool-input,
+.admin-overlay .tool-select,
+.admin-overlay .form-input,
+.admin-overlay .form-select{
+  background:rgba(6,6,4,.9)!important;
+  color:var(--admin-text)!important;
+  border-color:var(--admin-border)!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)!important;
+}
+.admin-overlay .tool-input::placeholder,
+.admin-overlay .form-input::placeholder{color:rgba(255,253,242,.42)!important;}
+.admin-overlay .tool-input:focus,
+.admin-overlay .tool-select:focus,
+.admin-overlay .form-input:focus,
+.admin-overlay .form-select:focus{
+  outline:none;
+  border-color:var(--admin-accent)!important;
+  box-shadow:0 0 0 3px rgba(250,204,21,.16)!important;
+}
+.admin-overlay .mgmt-btn,
+.admin-overlay .btn-ghost{
+  background:rgba(8,8,5,.88)!important;
+  color:var(--admin-muted)!important;
+  border-color:var(--admin-border)!important;
+}
+.admin-overlay .mgmt-btn:hover,
+.admin-overlay .btn-ghost:hover{
+  color:var(--admin-accent)!important;
+  border-color:var(--admin-accent)!important;
+  background:rgba(250,204,21,.1)!important;
+}
+.admin-overlay .btn-primary,
+.admin-overlay .ship-btn{
+  background:linear-gradient(135deg,#facc15,#f59e0b)!important;
+  color:#111!important;
+  border-color:transparent!important;
+  box-shadow:0 16px 36px rgba(250,204,21,.2)!important;
+}
+.admin-overlay .status-new{background:rgba(0,229,160,.15)!important;color:#2fffc0!important;}
+.admin-overlay .status-processing{background:rgba(245,158,11,.16)!important;color:#fbbf24!important;}
+.admin-overlay .status-shipped{background:rgba(59,130,246,.16)!important;color:#93c5fd!important;}
+.admin-overlay .status-done{background:rgba(34,197,94,.16)!important;color:#86efac!important;}
+.admin-overlay .status-cancelled{background:rgba(244,63,94,.18)!important;color:#fb7185!important;}
+.admin-overlay .stock-pill,
+.admin-overlay .visibility-pill{
+  background:rgba(250,204,21,.08)!important;
+  border-color:rgba(250,204,21,.26)!important;
+  color:var(--admin-muted)!important;
+}
 .logo-mark img{object-fit:contain;background:transparent;border-radius:10px;}
 .logo-text,.hero h1,.section-title,.product-name,.detail-title,.feature-title,.service-title,.payment-block h3,.newsletter h2,.admin-nav h2,.modal-header h3{
   font-family:var(--font-display)!important;
@@ -2504,7 +2639,7 @@ function doLogin(){
 }
 
 function isAdminUser(){
-  return currentUser?.role==='admin';
+  return ['admin','moderator'].includes(currentUser?.role);
 }
 
 function isEmployeeUser(){
@@ -2512,12 +2647,11 @@ function isEmployeeUser(){
 }
 
 function canManageProducts(){
-  return ['admin','employee'].includes(currentUser?.role);
+  return isAdminUser() || isEmployeeUser();
 }
 
 function allowedAdminTab(tab){
   if(isEmployeeUser())return ['orders','products'].includes(tab);
-  if(currentUser?.role==='moderator')return ['dashboard','orders'].includes(tab);
   return true;
 }
 
