@@ -164,19 +164,45 @@ const upload = multer({
 });
 
 // Rate limiting
-const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 });
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.API_RATE_LIMIT_MAX || 300),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many requests. Please try again later.' }
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: Number(process.env.AUTH_RATE_LIMIT_MAX || 8),
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: { success: false, error: 'Too many login attempts. Please try again later.' }
+});
+const orderLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: Number(process.env.ORDER_RATE_LIMIT_MAX || 30),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many orders from this connection. Please try again later.' }
+});
 router.use(apiLimiter);
 
 // Session middleware
 const isProd = process.env.NODE_ENV === 'production';
+if (isProd && !process.env.SESSION_SECRET) {
+  console.warn('[Security] SESSION_SECRET is not set. Add a strong SESSION_SECRET in Render environment variables.');
+}
 router.use(session({
+  name: 'resal.sid',
   secret: process.env.SESSION_SECRET || 'resal_dev_secret_change_in_prod',
   resave: false,
   saveUninitialized: false,
+  proxy: isProd,
   cookie: {
     httpOnly: true,
     secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
+    sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000,
   }
 }));
@@ -324,7 +350,7 @@ function isPasswordMatch(password, storedPassword) {
 
 // ============ LOGIN / LOGOUT ============
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     
@@ -522,7 +548,7 @@ router.get('/orders', async (req, res) => {
   }
 });
 
-router.post('/orders', async (req, res) => {
+router.post('/orders', orderLimiter, async (req, res) => {
   try {
     const { name, wilayat, area, phone, items, delivery, deliveryCost, vatRate, vatAmount, total, totalPrice, payment } = req.body;
 

@@ -44,26 +44,68 @@ async function startServer() {
   
   const app = express();
   const server = createServer(app);
+  const isProd = process.env.NODE_ENV === "production";
 
   // FIX #1: Trust Render's reverse proxy so req.protocol === 'https' in production
   // This is required for secure session cookies to work on Render
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
+
+  app.use((req, res, next) => {
+    if (['TRACE', 'TRACK'].includes(req.method)) {
+      return res.status(405).send('Method Not Allowed');
+    }
+    next();
+  });
+
   app.use(helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        "default-src": ["'self'"],
+        "base-uri": ["'self'"],
+        "form-action": ["'self'", "https://wa.me", "https://www.paypal.com", "https://paypal.me"],
+        "frame-ancestors": ["'none'"],
+        "script-src": ["'self'", "'unsafe-inline'"],
+        "script-src-attr": ["'unsafe-inline'"],
+        "style-src": ["'self'", "'unsafe-inline'"],
+        "img-src": ["'self'", "data:", "blob:", "https:"],
+        "font-src": ["'self'", "data:"],
+        "connect-src": ["'self'", "https:"],
+        ...(isProd ? { "upgrade-insecure-requests": [] } : {}),
+      },
+    },
     crossOriginEmbedderPolicy: false,
+    hsts: isProd ? { maxAge: 15552000, includeSubDomains: true, preload: false } : false,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
   }));
 
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Keep JSON forms small. Product images are uploaded through multer with its own limits.
+  app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || "1mb" }));
+  app.use(express.urlencoded({ limit: process.env.URLENCODED_BODY_LIMIT || "200kb", extended: true }));
   app.use(cookieParser());
-  const corsOrigin = process.env.CORS_ORIGIN === "*" ? true : (process.env.CORS_ORIGIN || true);
-  app.use(cors({ origin: corsOrigin, credentials: true }));
+
+  const configuredOrigins = (process.env.CORS_ORIGIN || process.env.PUBLIC_URL || "https://resal-store-om.onrender.com")
+    .split(",")
+    .map(origin => origin.trim())
+    .filter(Boolean);
+  const devOrigins = ["http://localhost:3000", "http://127.0.0.1:3000"];
+  const allowedOrigins = new Set([...configuredOrigins, ...devOrigins]);
+  app.use(cors({
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  }));
 
   // Serve uploaded files
   const uploadDir = path.resolve(process.cwd(), process.env.UPLOAD_DIR || 'public/uploads');
-  app.use('/uploads', express.static(uploadDir));
+  app.use('/uploads', express.static(uploadDir, {
+    fallthrough: false,
+    maxAge: isProd ? '7d' : 0,
+  }));
 
   // Mount the custom Resal REST API with Supabase (with session fix applied inside)
   const resalApiRouter = await initializeAPI();
