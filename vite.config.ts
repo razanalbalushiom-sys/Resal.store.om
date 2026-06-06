@@ -2,7 +2,7 @@ import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
-import { defineConfig, type Plugin, type ViteDevServer } from "vite";
+import { defineConfig, type Plugin, type PluginOption, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
 // =============================================================================
@@ -150,7 +150,7 @@ function vitePluginManusDebugCollector(): Plugin {
 }
 
 export default defineConfig(async () => {
-  const plugins: Plugin[] = [react(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+  const plugins: PluginOption[] = [react(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
 
   // Only load Tailwind Vite plugin during development to avoid importing it at
   // runtime on production servers (like Render) where vite/dev plugins aren't needed.
