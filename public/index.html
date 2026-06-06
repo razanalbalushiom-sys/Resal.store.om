@@ -571,6 +571,140 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
 .price-old{color:#9388aa;}
 .product-price,.detail-price,.cart-total-val{color:#7c3aed!important;-webkit-text-fill-color:initial;background:none;}
 .ship-btn{color:#fff;}
+
+/* ===== RESAL GAMING THEME ===== */
+:root{
+  --bg:#0b0b0a;--bg2:#11110f;--bg3:#171713;--bg4:#222015;
+  --card:rgba(22,22,18,.92);
+  --border:#facc1530;--border2:#facc1555;--border3:#facc15b8;
+  --purple:#facc15;--purple2:#facc15;--purple3:#f59e0b;
+  --purple-bright:#ffd429;--purple-glow:#facc1536;--purple-dim:#facc1514;
+  --text:#fffdf2;--text2:#d8d1b5;--text3:#8f876d;
+  --red:#ff4757;--green:#22c55e;--orange:#f59e0b;
+}
+body[data-theme="dark"],body{
+  background:
+    radial-gradient(circle at 8% 8%,rgba(250,204,21,.16),transparent 22%),
+    radial-gradient(circle at 88% 14%,rgba(250,204,21,.12),transparent 24%),
+    linear-gradient(135deg,#070707 0%,#10100e 48%,#070707 100%)!important;
+  color:var(--text);
+}
+body[data-theme="light"]{
+  --bg:#fffaf0;--bg2:#ffffff;--bg3:#fff7d6;--bg4:#fff0a8;
+  --card:rgba(255,255,255,.92);
+  --border:#ca8a0430;--border2:#ca8a0452;--border3:#ca8a04a8;
+  --purple:#eab308;--purple2:#facc15;--purple3:#f59e0b;
+  --purple-bright:#b77900;--purple-glow:#facc1530;--purple-dim:#facc1518;
+  --text:#15130b;--text2:#4f4933;--text3:#82784d;
+  background:
+    radial-gradient(circle at 10% 12%,rgba(250,204,21,.2),transparent 22%),
+    radial-gradient(circle at 90% 20%,rgba(245,158,11,.16),transparent 26%),
+    linear-gradient(135deg,#fffdf5 0%,#fff8d7 42%,#ffffff 100%)!important;
+}
+body::before{
+  background-image:
+    radial-gradient(circle at 5px 5px,rgba(250,204,21,.5) 1.3px,transparent 1.5px),
+    linear-gradient(125deg,transparent 0 48%,rgba(250,204,21,.22) 49%,transparent 50% 100%)!important;
+  background-size:24px 24px,100% 100%;
+  opacity:.35;
+}
+body[data-theme="light"]::before{opacity:.22;}
+nav{
+  height:78px;
+  background:rgba(10,10,9,.9)!important;
+  border-bottom:1px solid rgba(250,204,21,.28)!important;
+  box-shadow:0 14px 40px rgba(0,0,0,.28), inset 0 -1px rgba(250,204,21,.18);
+  overflow:hidden;
+}
+body[data-theme="light"] nav{background:rgba(255,255,255,.92)!important;box-shadow:0 12px 32px rgba(120,90,0,.12);}
+nav::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:44%;
+  background:
+    linear-gradient(90deg,rgba(250,204,21,.95) 0 44px,rgba(250,204,21,.2) 44px 46px,transparent 46px),
+    repeating-linear-gradient(0deg,transparent 0 21px,rgba(250,204,21,.95) 21px 25px,transparent 25px 34px);
+  clip-path:polygon(0 0,100% 0,72% 100%,0 100%);
+  opacity:.18;pointer-events:none;
+}
+nav::after{background:linear-gradient(90deg,transparent,var(--purple),rgba(250,204,21,.9),transparent)!important;}
+.hamburger{display:flex;width:42px;height:42px;align-items:center;justify-content:center;border:1px solid var(--border2);border-radius:10px;background:rgba(250,204,21,.08);}
+.hamburger span{width:24px;height:3px;background:#facc15!important;box-shadow:0 0 10px rgba(250,204,21,.6);}
+.nav-logo{gap:10px;}
+.logo-mark{width:50px;height:50px;border-radius:14px;background:#facc15!important;padding:3px;box-shadow:0 0 0 1px rgba(250,204,21,.45),0 16px 36px rgba(250,204,21,.24)!important;overflow:hidden;}
+.logo-mark img{width:100%;height:100%;object-fit:cover;border-radius:11px;display:block;}
+.logo-text{font-size:21px;color:var(--text)!important;line-height:1.05;}
+.logo-text span,.hero h1 em{color:#facc15!important;-webkit-text-fill-color:initial!important;background:none!important;}
+.theme-toggle{
+  width:42px;height:42px;border-radius:10px;border:1px solid var(--border2);
+  background:rgba(250,204,21,.12);color:#facc15;cursor:pointer;font-size:17px;
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+}
+.theme-toggle:hover{background:#facc15;color:#111;transform:translateY(-2px);}
+.nav-cart,.btn-primary,.add-btn{
+  background:linear-gradient(135deg,#facc15,#f59e0b)!important;color:#15130b!important;
+  box-shadow:0 14px 34px rgba(250,204,21,.28)!important;
+}
+.btn-ghost{background:rgba(250,204,21,.06)!important;border-color:var(--border3)!important;color:var(--purple-bright)!important;}
+.hero{
+  min-height:calc(100vh - 10px);
+  background:
+    radial-gradient(circle at 8% 74%,transparent 0 74px,rgba(250,204,21,.9) 75px 78px,transparent 79px),
+    radial-gradient(circle at 14% 24%,rgba(250,204,21,.18),transparent 24%),
+    linear-gradient(135deg,#080808 0%,#12120f 50%,#080808 100%)!important;
+  padding-top:110px;
+}
+body[data-theme="light"] .hero{
+  background:
+    radial-gradient(circle at 8% 74%,transparent 0 74px,rgba(234,179,8,.8) 75px 78px,transparent 79px),
+    radial-gradient(circle at 18% 20%,rgba(250,204,21,.22),transparent 25%),
+    linear-gradient(135deg,#fffdf3 0%,#fff5bf 48%,#fff 100%)!important;
+}
+.hero::before{
+  background:
+    radial-gradient(circle at 10% 20%,rgba(250,204,21,.9) 0 1.5px,transparent 2px) 0 0/18px 18px,
+    linear-gradient(125deg,transparent 0 49%,rgba(250,204,21,.45) 49.5%,transparent 50.2% 100%)!important;
+  opacity:.35;mask-image:none;
+}
+.hero::after{border-color:#facc15!important;opacity:.9;}
+.hero-badge{background:rgba(12,12,10,.78)!important;border-color:#facc15!important;color:var(--text)!important;}
+body[data-theme="light"] .hero-badge{background:rgba(255,255,255,.78)!important;}
+.badge-dot{background:#facc15!important;box-shadow:0 0 18px #facc15!important;}
+.hero-tagline,.section-tag,.product-category,.detail-category{color:#facc15!important;}
+.hero h1{color:var(--text)!important;text-shadow:0 8px 30px rgba(0,0,0,.35);letter-spacing:0!important;}
+.hero-sub{color:var(--text2)!important;font-size:clamp(1.05rem,2vw,1.25rem);}
+.hero-stats{
+  background:rgba(22,22,18,.82)!important;border:1px solid rgba(250,204,21,.24)!important;
+  box-shadow:0 20px 60px rgba(0,0,0,.25)!important;
+}
+body[data-theme="light"] .hero-stats{background:rgba(255,255,255,.82)!important;}
+.stat-num,.product-price,.detail-price,.cart-total-val{color:#facc15!important;-webkit-text-fill-color:initial!important;background:none!important;}
+body[data-theme="light"] .stat-num,body[data-theme="light"] .product-price,body[data-theme="light"] .detail-price{color:#b77900!important;}
+.cat-btn,.product-card,.feature-card,.trust-badge,.detail-meta-item,.mgmt-card,.add-product-form,.stat-card,.orders-table,.mod-item,.tool-input,.tool-select{
+  background:var(--card)!important;border-color:var(--border)!important;box-shadow:0 18px 50px rgba(0,0,0,.16)!important;
+}
+body[data-theme="light"] .cat-btn,body[data-theme="light"] .product-card,body[data-theme="light"] .feature-card,body[data-theme="light"] .trust-badge,body[data-theme="light"] .detail-meta-item,body[data-theme="light"] .mgmt-card,body[data-theme="light"] .add-product-form,body[data-theme="light"] .stat-card,body[data-theme="light"] .orders-table,body[data-theme="light"] .mod-item,body[data-theme="light"] .tool-input,body[data-theme="light"] .tool-select{
+  box-shadow:0 16px 36px rgba(120,90,0,.1)!important;
+}
+.cat-btn:hover,.cat-btn.active{background:rgba(250,204,21,.14)!important;border-color:#facc15!important;color:#facc15!important;}
+body[data-theme="light"] .cat-btn:hover,body[data-theme="light"] .cat-btn.active{color:#9a6a00!important;}
+.product-img,.mgmt-card-img,.product-gallery,.cart-item-img{background:linear-gradient(135deg,#171713,#2a260d)!important;}
+body[data-theme="light"] .product-img,body[data-theme="light"] .mgmt-card-img,body[data-theme="light"] .product-gallery,body[data-theme="light"] .cart-item-img{background:linear-gradient(135deg,#fff7d6,#fff)!important;}
+.product-card:hover{border-color:#facc15!important;box-shadow:0 28px 70px rgba(250,204,21,.22)!important;}
+.ticker{background:linear-gradient(90deg,#111,#facc15,#111)!important;color:#111;}
+.newsletter,.payment-section,.trust-bar,footer{background:rgba(17,17,15,.78)!important;border-color:var(--border2)!important;}
+body[data-theme="light"] .newsletter,body[data-theme="light"] .payment-section,body[data-theme="light"] .trust-bar,body[data-theme="light"] footer{background:rgba(255,255,255,.76)!important;}
+.mobile-menu,.cart-drawer,.modal-box,.admin-nav,.admin-sidebar,.admin-overlay{background:rgba(13,13,11,.97)!important;}
+body[data-theme="light"] .mobile-menu,body[data-theme="light"] .cart-drawer,body[data-theme="light"] .modal-box,body[data-theme="light"] .admin-nav,body[data-theme="light"] .admin-sidebar,body[data-theme="light"] .admin-overlay{background:rgba(255,255,255,.97)!important;}
+.form-input,.form-select,.nl-input{background:var(--bg3)!important;border-color:var(--border2)!important;color:var(--text)!important;}
+.footer-social .social-btn:hover{background:#facc15;color:#111!important;}
+@media(max-width:768px){
+  nav{height:84px;padding-inline:18px;}
+  .nav-links{display:none;}
+  .nav-cart{padding:10px 14px;}
+  .theme-toggle{width:40px;height:40px;}
+  .logo-text{font-size:19px;}
+  .logo-mark{width:48px;height:48px;}
+  nav::before{width:54%;opacity:.22;}
+}
 </style>
 </head>
 <body>
@@ -601,6 +735,7 @@ nav::after{background:linear-gradient(90deg,transparent,#d8c7ff,transparent);}
     <a href="#" onclick="openTrackOrder();return false;">تتبع الطلب</a>
   </div>
   <div class="nav-right">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="تبديل الثيم">☀️</button>
     <button class="nav-cart" onclick="openCart()">🛒 السلة <span class="cart-count" id="cartCount">0</span></button>
     <div class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
   </div>
@@ -2221,8 +2356,22 @@ function subscribe(){
 }
 function toggleMenu(){id('mobileMenu').classList.toggle('open');}
 function closeMenu(){id('mobileMenu').classList.remove('open');}
+function applyTheme(theme){
+  const selected=theme==='light'?'light':'dark';
+  document.body.dataset.theme=selected;
+  localStorage.setItem('resalTheme',selected);
+  const btn=id('themeToggle');
+  if(btn)btn.textContent=selected==='light'?'🌙':'☀️';
+}
+function toggleTheme(){
+  applyTheme(document.body.dataset.theme==='light'?'dark':'light');
+}
+function initTheme(){
+  applyTheme(localStorage.getItem('resalTheme')||'dark');
+}
 
 // Init
+initTheme();
 loadSettings();fetchProducts();updateCartUI();
 if(IS_ADMIN_PAGE){
   setTimeout(showAdminLogin, 150);
