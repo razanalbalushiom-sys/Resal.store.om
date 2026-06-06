@@ -164,9 +164,16 @@ const upload = multer({
 });
 
 // Rate limiting
+function requestIpKey(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  const ip = req.ip || forwarded || req.socket?.remoteAddress || '127.0.0.1';
+  return rateLimit.ipKeyGenerator(ip);
+}
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: Number(process.env.API_RATE_LIMIT_MAX || 300),
+  keyGenerator: requestIpKey,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many requests. Please try again later.' }
@@ -174,6 +181,7 @@ const apiLimiter = rateLimit({
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: Number(process.env.AUTH_RATE_LIMIT_MAX || 8),
+  keyGenerator: requestIpKey,
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
@@ -182,6 +190,7 @@ const authLimiter = rateLimit({
 const orderLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: Number(process.env.ORDER_RATE_LIMIT_MAX || 30),
+  keyGenerator: requestIpKey,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many orders from this connection. Please try again later.' }
