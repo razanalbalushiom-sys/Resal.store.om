@@ -85,15 +85,18 @@ async function startServer() {
   app.use(express.urlencoded({ limit: process.env.URLENCODED_BODY_LIMIT || "200kb", extended: true }));
   app.use(cookieParser());
 
+  const normalizeOrigin = (value: string) => value.trim().replace(/\/+$/, "");
   const configuredOrigins = (process.env.CORS_ORIGIN || process.env.PUBLIC_URL || "https://resal-store-om.onrender.com")
     .split(",")
-    .map(origin => origin.trim())
+    .map(origin => normalizeOrigin(origin))
     .filter(Boolean);
   const devOrigins = ["http://localhost:3000", "http://127.0.0.1:3000"];
-  const allowedOrigins = new Set([...configuredOrigins, ...devOrigins]);
+  const renderOrigins = ["https://resal-store-om.onrender.com"];
+  const allowedOrigins = new Set([...configuredOrigins, ...devOrigins, ...renderOrigins]);
   app.use(cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.has(origin)) return callback(null, true);
+      const normalizedOrigin = origin ? normalizeOrigin(origin) : "";
+      if (!normalizedOrigin || allowedOrigins.has(normalizedOrigin)) return callback(null, true);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
