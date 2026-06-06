@@ -154,6 +154,10 @@ function isOrderStaffRole(role) {
   return ['admin', 'moderator', 'employee'].includes(role);
 }
 
+function isProductStaffRole(role) {
+  return ['admin', 'employee'].includes(role);
+}
+
 // Initialize API
 async function initializeAPI() {
   return router;
@@ -516,7 +520,7 @@ router.delete('/users/:id', async (req, res) => {
 router.get('/products', async (req, res) => {
   try {
     const category = req.query.category;
-    const isStaff = req.session?.userRole === 'admin' || req.session?.userRole === 'moderator';
+    const isStaff = isProductStaffRole(req.session?.userRole) || req.session?.userRole === 'moderator';
     const filters = [];
     if (category) {
       filters.push(`category=eq.${encodeURIComponent(category)}`);
@@ -534,8 +538,8 @@ router.get('/products', async (req, res) => {
 
 router.post('/products', upload.array('images', 8), async (req, res) => {
   try {
-    if (req.session.userRole !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Admin only' });
+    if (!isProductStaffRole(req.session.userRole)) {
+      return res.status(403).json({ success: false, error: 'Product staff only' });
     }
 
     const { name, description, price, category, cat, stock, oldPrice, emoji, badge, desc, isActive, is_active } = req.body;
@@ -579,8 +583,8 @@ router.post('/products', upload.array('images', 8), async (req, res) => {
 
 router.put('/products/:id', upload.array('images', 8), async (req, res) => {
   try {
-    if (req.session.userRole !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Admin only' });
+    if (!isProductStaffRole(req.session.userRole)) {
+      return res.status(403).json({ success: false, error: 'Product staff only' });
     }
 
     const { id } = req.params;
@@ -627,7 +631,7 @@ router.put('/products/:id', upload.array('images', 8), async (req, res) => {
 
 router.delete('/products/:id', async (req, res) => {
   try {
-    if (req.session.userRole !== 'admin') {
+    if (!isAdminRole(req.session.userRole)) {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
 

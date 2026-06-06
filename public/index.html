@@ -2511,8 +2511,12 @@ function isEmployeeUser(){
   return currentUser?.role==='employee';
 }
 
+function canManageProducts(){
+  return ['admin','employee'].includes(currentUser?.role);
+}
+
 function allowedAdminTab(tab){
-  if(isEmployeeUser())return tab==='orders';
+  if(isEmployeeUser())return ['orders','products'].includes(tab);
   if(currentUser?.role==='moderator')return ['dashboard','orders'].includes(tab);
   return true;
 }
@@ -2572,7 +2576,7 @@ function applyAdminPermissions(){
   const dashboardBtn=document.querySelector('[data-admin-tab-btn="dashboard"]');
   const ordersBtn=document.querySelector('[data-admin-tab-btn="orders"]');
   if(id('modsTabBtn'))id('modsTabBtn').style.display=isAdminUser()?'flex':'none';
-  if(productsBtn)productsBtn.style.display=isAdminUser()?'flex':'none';
+  if(productsBtn)productsBtn.style.display=canManageProducts()?'flex':'none';
   if(settingsBtn)settingsBtn.style.display=isAdminUser()?'flex':'none';
   if(dashboardBtn)dashboardBtn.style.display=isEmployeeUser()?'none':'flex';
   if(ordersBtn)ordersBtn.style.display='flex';
@@ -2584,8 +2588,10 @@ function openAdmin(){
   applyAdminPermissions();
   applyAdminLanguage();
   fetchOrders();
-  if(isAdminUser()){
+  if(canManageProducts()){
     fetchProducts();
+  }
+  if(isAdminUser()){
     fetchModerators();
     renderDashboard();
     adminTab('dashboard',document.querySelector('[data-admin-tab-btn="dashboard"]'));
@@ -2899,9 +2905,9 @@ function renderProductsMgmt(){
         <div style="margin:6px 0;"><span class="stock-pill ${Number(p.stock||0)<=0?'stock-out':''}">${Number(p.stock||0)>0?`المخزون: ${p.stock}`:'غير متوفر'}</span></div>
         <div style="margin:6px 0;"><span class="visibility-pill ${p.isActive===false?'hidden':''}">${p.isActive===false?'مخفي عن الموقع':'ظاهر في الموقع'}</span></div>
         <div class="mgmt-actions">
-          <button class="mgmt-btn" onclick="showEditProductForm(${p.id})">تعديل</button>
-          <button class="mgmt-btn" onclick="toggleProductVisibility(${p.id})">${p.isActive===false?'إظهار':'إخفاء'}</button>
-          <button class="mgmt-btn del" onclick="deleteProduct(${p.id})">حذف</button>
+          <button class="mgmt-btn" onclick="showEditProductForm(${p.id})">${adminLabel('تعديل','Edit')}</button>
+          <button class="mgmt-btn" onclick="toggleProductVisibility(${p.id})">${p.isActive===false?adminLabel('إظهار','Show'):adminLabel('إخفاء','Hide')}</button>
+          ${isAdminUser()?`<button class="mgmt-btn del" onclick="deleteProduct(${p.id})">${adminLabel('حذف','Delete')}</button>`:''}
         </div>
       </div>
     </div>`).join('');
