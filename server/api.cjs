@@ -146,6 +146,14 @@ class SupabaseClient {
 
 const supabase = new SupabaseClient();
 
+function isAdminRole(role) {
+  return role === 'admin';
+}
+
+function isOrderStaffRole(role) {
+  return ['admin', 'moderator', 'employee'].includes(role);
+}
+
 // Initialize API
 async function initializeAPI() {
   return router;
@@ -661,7 +669,7 @@ router.get('/orders', async (req, res) => {
 
     const status = req.query.status;
     
-    let filter = req.session.userRole === 'admin' || req.session.userRole === 'moderator'
+    let filter = isOrderStaffRole(req.session.userRole)
       ? '?order=id.desc'
       : `?user_id=eq.${req.session.userId}&order=id.desc`;
     if (status) {
@@ -780,8 +788,8 @@ router.get('/orders/track', async (req, res) => {
 
 router.put('/orders/:id', async (req, res) => {
   try {
-    if (req.session.userRole !== 'admin') {
-      return res.status(403).json({ success: false, error: 'Admin only' });
+    if (!isOrderStaffRole(req.session.userRole)) {
+      return res.status(403).json({ success: false, error: 'Staff only' });
     }
 
     const { id } = req.params;

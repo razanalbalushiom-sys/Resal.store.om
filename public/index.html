@@ -1090,16 +1090,17 @@ body,body *{
     <h2>🛡️ لوحة تحكم رسال <span style="font-size:13px;color:var(--text2);font-weight:500;" id="adminWelcome"></span></h2>
     <div style="display:flex;gap:10px;align-items:center;">
       <span id="newOrdersBadge" style="display:none;" class="notif-badge">0</span>
+      <button class="btn-ghost" id="adminLangToggle" style="padding:8px 12px;font-size:13px;" onclick="toggleAdminLanguage()">EN</button>
       <button class="btn-ghost" style="padding:8px 16px;font-size:13px;" onclick="closeAdmin()">✕ إغلاق</button>
     </div>
   </div>
   <div class="admin-layout">
     <div class="admin-sidebar">
-      <button class="sidebar-btn active" onclick="adminTab('dashboard',this)"><span class="sidebar-icon">📊</span><span class="sidebar-label">الرئيسية</span></button>
-      <button class="sidebar-btn" onclick="adminTab('orders',this)"><span class="sidebar-icon">📦</span><span class="sidebar-label">الطلبات</span></button>
-      <button class="sidebar-btn" onclick="adminTab('products',this)"><span class="sidebar-icon">🛍️</span><span class="sidebar-label">المنتجات</span></button>
+      <button class="sidebar-btn active" data-admin-tab-btn="dashboard" onclick="adminTab('dashboard',this)"><span class="sidebar-icon">📊</span><span class="sidebar-label">الرئيسية</span></button>
+      <button class="sidebar-btn" data-admin-tab-btn="orders" onclick="adminTab('orders',this)"><span class="sidebar-icon">📦</span><span class="sidebar-label">الطلبات</span></button>
+      <button class="sidebar-btn" data-admin-tab-btn="products" onclick="adminTab('products',this)"><span class="sidebar-icon">🛍️</span><span class="sidebar-label">المنتجات</span></button>
       <button class="sidebar-btn" id="modsTabBtn" onclick="adminTab('moderators',this)" style="display:none;"><span class="sidebar-icon">👥</span><span class="sidebar-label">الموظفون</span></button>
-      <button class="sidebar-btn" onclick="adminTab('settings',this)"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">الإعدادات</span></button>
+      <button class="sidebar-btn" data-admin-tab-btn="settings" onclick="adminTab('settings',this)"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">الإعدادات</span></button>
     </div>
     <div class="admin-content">
 
@@ -1380,6 +1381,7 @@ let adminOrdersLoaded = false;
 // Auth accounts
 let accounts = [];
 let currentUser = null;
+let adminLang = localStorage.getItem('resalAdminLang') || 'ar';
 let settings = {
   siteName: 'رسال شوب',
   siteDescription: 'لسنا الوحيدين ولكننا نطمح لنكون الأفضل. نوصل الجودة لبابك أينما كنت في السلطنة.',
@@ -2501,22 +2503,106 @@ function doLogin(){
     }).catch(e=>{ id('loginError').style.display='block'; });
 }
 
+function isAdminUser(){
+  return currentUser?.role==='admin';
+}
+
+function isEmployeeUser(){
+  return currentUser?.role==='employee';
+}
+
+function allowedAdminTab(tab){
+  if(isEmployeeUser())return tab==='orders';
+  if(currentUser?.role==='moderator')return ['dashboard','orders'].includes(tab);
+  return true;
+}
+
+function adminLabel(ar,en){
+  return adminLang==='en'?en:ar;
+}
+
+function setText(selector, ar, en){
+  document.querySelectorAll(selector).forEach(el=>{ el.textContent=adminLabel(ar,en); });
+}
+
+function applyAdminLanguage(){
+  const isEn=adminLang==='en';
+  const panel=id('adminPanel');
+  if(panel){
+    panel.dir=isEn?'ltr':'rtl';
+    panel.lang=isEn?'en':'ar';
+  }
+  if(id('adminLangToggle'))id('adminLangToggle').textContent=isEn?'AR':'EN';
+  setText('[data-admin-tab-btn="dashboard"] .sidebar-label','الرئيسية','Dashboard');
+  setText('[data-admin-tab-btn="orders"] .sidebar-label','الطلبات','Orders');
+  setText('[data-admin-tab-btn="products"] .sidebar-label','المنتجات','Products');
+  setText('#modsTabBtn .sidebar-label','الموظفون','Staff');
+  setText('[data-admin-tab-btn="settings"] .sidebar-label','الإعدادات','Settings');
+  if(id('adminOrderSearch'))id('adminOrderSearch').placeholder=adminLabel('ابحث برقم الطلب، الاسم، الهاتف...','Search order, customer, phone...');
+  const status=id('adminOrderStatus');
+  if(status){
+    const labels=[
+      ['كل الحالات','All statuses'],
+      ['جديد','New'],
+      ['قيد التجهيز','Processing'],
+      ['تم الشحن','Shipped'],
+      ['مكتمل','Completed'],
+      ['ملغي','Cancelled']
+    ];
+    Array.from(status.options).forEach((option,i)=>{ if(labels[i])option.textContent=adminLabel(labels[i][0],labels[i][1]); });
+  }
+  const ordersTitle=id('ordersCount')?.parentElement;
+  if(ordersTitle){
+    const badge=id('ordersCount');
+    ordersTitle.textContent=adminLabel('الطلبات ','Orders ');
+    if(badge)ordersTitle.appendChild(badge);
+  }
+  renderOrdersTable();
+}
+
+function toggleAdminLanguage(){
+  adminLang=adminLang==='ar'?'en':'ar';
+  localStorage.setItem('resalAdminLang',adminLang);
+  applyAdminLanguage();
+}
+
+function applyAdminPermissions(){
+  const productsBtn=document.querySelector('[data-admin-tab-btn="products"]');
+  const settingsBtn=document.querySelector('[data-admin-tab-btn="settings"]');
+  const dashboardBtn=document.querySelector('[data-admin-tab-btn="dashboard"]');
+  const ordersBtn=document.querySelector('[data-admin-tab-btn="orders"]');
+  if(id('modsTabBtn'))id('modsTabBtn').style.display=isAdminUser()?'flex':'none';
+  if(productsBtn)productsBtn.style.display=isAdminUser()?'flex':'none';
+  if(settingsBtn)settingsBtn.style.display=isAdminUser()?'flex':'none';
+  if(dashboardBtn)dashboardBtn.style.display=isEmployeeUser()?'none':'flex';
+  if(ordersBtn)ordersBtn.style.display='flex';
+}
+
 function openAdmin(){
   id('adminWelcome').textContent=`— مرحباً ${currentUser.name}`;
-  // Show moderators tab only for admin
-  id('modsTabBtn').style.display=currentUser.role==='admin'?'flex':'none';
   id('adminPanel').classList.add('open');
-  renderDashboard();renderOrdersTable();
-  // fetch fresh products from server
-  fetchProducts();
+  applyAdminPermissions();
+  applyAdminLanguage();
   fetchOrders();
-  if(currentUser.role==='admin')fetchModerators();
+  if(isAdminUser()){
+    fetchProducts();
+    fetchModerators();
+    renderDashboard();
+    adminTab('dashboard',document.querySelector('[data-admin-tab-btn="dashboard"]'));
+  }else{
+    adminTab('orders',document.querySelector('[data-admin-tab-btn="orders"]'));
+  }
   updateNewOrdersBadge();
 }
 function closeAdmin(){id('adminPanel').classList.remove('open');}
 
 // ========================= ADMIN TABS =========================
 function adminTab(tab,btn){
+  if(!allowedAdminTab(tab)){
+    showToast(adminLabel('ليست لديك صلاحية لهذا القسم','You do not have permission for this section'),'⚠️');
+    tab='orders';
+    btn=document.querySelector('[data-admin-tab-btn="orders"]');
+  }
   document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('active'));
   id('tab-'+tab).classList.add('active');
@@ -2592,7 +2678,8 @@ function renderDashboard(){
 
 function statusBadge(s,label){
   const cls={new:'status-new',processing:'status-processing',shipped:'status-shipped',done:'status-done',cancelled:'status-cancelled'};
-  return `<span class="order-status ${cls[s]||'status-new'}">${label||s}</span>`;
+  const en={new:'New',processing:'Processing',shipped:'Shipped',done:'Completed',cancelled:'Cancelled'};
+  return `<span class="order-status ${cls[s]||'status-new'}">${adminLang==='en'?(en[s]||s):(label||s)}</span>`;
 }
 
 // ========================= ORDERS TABLE =========================
@@ -2627,6 +2714,52 @@ function renderOrdersTable(){
       ${!['done','cancelled'].includes(o.status)?`<button class="mgmt-btn del" onclick="cancelOrder('${o.id}')">إلغاء</button>`:''}
       ${o.status==='done'?`<span style="color:var(--text3);font-size:12px;">مكتمل ✓</span>`:''}
       ${o.status==='cancelled'?`<span style="color:#ff4757;font-size:12px;">ملغي</span>`:''}
+    </div></td>
+  </tr>`).join('');
+}
+
+function renderOrdersTable(){
+  updateNewOrdersBadge();
+  const tbody=id('ordersTableBody');
+  const table=id('ordersTable');
+  if(!tbody)return;
+  if(table){
+    const headers=adminLang==='en'
+      ? ['Order #','Customer','Wilayat / Area','Products','Total','Delivery','Status','Action']
+      : ['رقم الطلب','الزبون','الولاية / المنطقة','المنتج','الإجمالي','الشحن','الحالة','إجراء'];
+    table.querySelectorAll('thead th').forEach((th,i)=>{ if(headers[i])th.textContent=headers[i]; });
+  }
+  const q=adminOrderSearch.trim().toLowerCase();
+  const filtered=orders.filter(o=>{
+    const statusOk=adminOrderStatus==='all'||o.status===adminOrderStatus;
+    const text=[o.id,o.name,o.phone,o.wilayat,o.area,(o.items||[]).map(i=>i.name).join(' ')].join(' ').toLowerCase();
+    return statusOk && (!q || text.includes(q));
+  });
+  if(!filtered.length){
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem;">${adminLabel('لا توجد طلبات مطابقة.','No matching orders.')}</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=filtered.map(o=>`<tr>
+    <td style="font-weight:700;color:var(--purple-bright);">${esc(o.id)}</td>
+    <td>
+      <div style="font-weight:700;">${esc(o.name)}</div>
+      <div style="font-size:12px;color:var(--text3);" dir="ltr">${esc(o.phone)}</div>
+    </td>
+    <td>${esc(o.wilayat)} / ${esc(o.area)}</td>
+    <td style="font-size:13px;">${(o.items||[]).map(i=>esc((i.emoji||'')+' '+i.name)).join('<br/>')}</td>
+    <td style="font-weight:700;color:var(--purple-bright);">${omr(Number(o.total||0))}</td>
+    <td>${o.delivery==='with'?adminLabel('🚚 مع توصيل','🚚 With delivery'):adminLabel('🏪 بدون توصيل','🏪 No delivery')}</td>
+    <td>${statusBadge(o.status,o.statusLabel)}</td>
+    <td><div class="order-actions">
+      <button class="mgmt-btn" onclick="openOrderWhatsApp('${esc(o.id)}')">${adminLabel('واتساب','WhatsApp')}</button>
+      <button class="mgmt-btn" onclick="copyOrderInvoice('${esc(o.id)}')">${adminLabel('نسخ','Copy')}</button>
+      <button class="mgmt-btn" onclick="printOrderInvoice('${esc(o.id)}')">${adminLabel('طباعة','Print')}</button>
+      ${o.status==='new'?`<button class="mgmt-btn" onclick="processOrder('${esc(o.id)}')" style="background:rgba(255,140,0,.2);border-color:#ff8c00;color:#ff8c00;">${adminLabel('⚙️ معالجة','⚙️ Process')}</button>`:''}
+      ${o.status==='processing'?`<button class="ship-btn" onclick="shipOrder('${esc(o.id)}')">${adminLabel('🚚 أرسل للشحن','🚚 Ship')}</button>`:''}
+      ${o.status==='shipped'?`<button class="mgmt-btn" onclick="doneOrder('${esc(o.id)}')" style="background:rgba(0,229,160,.1);border-color:#00e5a0;color:#00e5a0;">${adminLabel('✅ تسليم','✅ Complete')}</button>`:''}
+      ${!['done','cancelled'].includes(o.status)?`<button class="mgmt-btn del" onclick="cancelOrder('${esc(o.id)}')">${adminLabel('إلغاء','Cancel')}</button>`:''}
+      ${o.status==='done'?`<span style="color:var(--text3);font-size:12px;">${adminLabel('مكتمل ✓','Completed ✓')}</span>`:''}
+      ${o.status==='cancelled'?`<span style="color:#ff4757;font-size:12px;">${adminLabel('ملغي','Cancelled')}</span>`:''}
     </div></td>
   </tr>`).join('');
 }
