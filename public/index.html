@@ -620,14 +620,15 @@ body[data-theme="light"] nav{background:rgba(246,246,238,.84)!important;box-shad
 nav::before{
   content:'';position:absolute;left:0;top:0;bottom:0;width:44%;
   background:
-    linear-gradient(90deg,rgba(250,204,21,.95) 0 44px,rgba(250,204,21,.2) 44px 46px,transparent 46px),
-    repeating-linear-gradient(0deg,transparent 0 21px,rgba(250,204,21,.95) 21px 25px,transparent 25px 34px);
-  clip-path:polygon(0 0,100% 0,72% 100%,0 100%);
-  opacity:.18;pointer-events:none;
+    linear-gradient(90deg,rgba(250,204,21,.35),rgba(250,204,21,.08) 34%,transparent 78%),
+    linear-gradient(116deg,transparent 0 19px,#facc15 20px 26px,transparent 27px 44px,#facc15 45px 51px,transparent 52px 69px,#facc15 70px 76px,transparent 77px);
+  clip-path:polygon(0 0,100% 0,78% 100%,0 100%);
+  opacity:.72;pointer-events:none;
 }
 nav::after{background:linear-gradient(90deg,transparent,var(--purple),rgba(250,204,21,.9),transparent)!important;}
-.hamburger{display:flex;width:42px;height:42px;align-items:center;justify-content:center;border:1px solid var(--border2);border-radius:10px;background:rgba(250,204,21,.08);}
-.hamburger span{width:24px;height:3px;background:#facc15!important;box-shadow:0 0 10px rgba(250,204,21,.6);}
+.hamburger{display:flex;width:48px;height:42px;align-items:center;justify-content:center;border:1px solid rgba(250,204,21,.45);border-radius:10px;background:linear-gradient(135deg,rgba(250,204,21,.18),rgba(250,204,21,.04));position:relative;overflow:hidden;}
+.hamburger::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 0 9px,#facc15 10px 15px,transparent 16px 25px,#facc15 26px 31px,transparent 32px 41px,#facc15 42px 47px,transparent 48px);opacity:.95;}
+.hamburger span{display:none;}
 .nav-logo{gap:10px;}
 .logo-mark{width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,#facc15,#111)!important;padding:3px;box-shadow:0 0 0 1px rgba(250,204,21,.45),0 16px 36px rgba(250,204,21,.24)!important;overflow:hidden;}
 .logo-mark img{width:100%;height:100%;object-fit:cover;border-radius:11px;display:block;}
@@ -704,8 +705,32 @@ body[data-theme="light"] .mobile-menu,body[data-theme="light"] .cart-drawer,body
   backdrop-filter:blur(18px) saturate(1.1);
 }
 body[data-theme="dark"] .cat-btn,body[data-theme="dark"] .product-card,body[data-theme="dark"] .feature-card,body[data-theme="dark"] .trust-badge,body[data-theme="dark"] .detail-meta-item,body[data-theme="dark"] .mgmt-card,body[data-theme="dark"] .add-product-form,body[data-theme="dark"] .stat-card,body[data-theme="dark"] .orders-table,body[data-theme="dark"] .mod-item,body[data-theme="dark"] .tool-input,body[data-theme="dark"] .tool-select{
-  background:rgba(22,22,18,.74)!important;
+  background:rgba(22,22,18,.62)!important;
 }
+body[data-theme="dark"] #products .product-card,
+body[data-theme="dark"] #products .tool-input,
+body[data-theme="dark"] #products .tool-select{
+  background:rgba(0,0,0,.58)!important;
+  border-color:rgba(250,204,21,.2)!important;
+}
+body[data-theme="dark"] #products .product-info{background:rgba(0,0,0,.18)!important;}
+body::before{opacity:.22!important;}
+body[data-theme="light"]::before{opacity:.18!important;}
+.hero::before{opacity:.2!important;}
+.hero-glow,.hero-glow2,.hero-hex{opacity:.2!important;}
+.services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
+.service-card{position:relative;display:flex;flex-direction:column;gap:12px;min-height:190px;padding:24px;border-radius:8px;border:1px solid rgba(250,204,21,.22);background:rgba(18,18,14,.58);box-shadow:0 20px 60px rgba(0,0,0,.18);backdrop-filter:blur(18px);cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;overflow:hidden;}
+.service-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(250,204,21,.16),transparent 42%,rgba(250,204,21,.08));opacity:.55;pointer-events:none;}
+.service-card:hover{transform:translateY(-5px);border-color:#facc15;box-shadow:0 28px 70px rgba(250,204,21,.18);}
+.service-icon{width:52px;height:52px;border-radius:8px;display:grid;place-items:center;background:#facc15;color:#111;font-size:26px;font-weight:900;box-shadow:0 14px 30px rgba(250,204,21,.24);z-index:1;}
+.service-title{font-size:1.2rem;font-weight:900;color:var(--text);z-index:1;}
+.service-desc{color:var(--text2);line-height:1.8;font-size:14px;z-index:1;}
+.service-cta{margin-top:auto;color:#facc15;font-weight:900;font-size:14px;z-index:1;}
+body[data-theme="light"] .service-card{background:rgba(255,255,255,.56);border-color:rgba(177,128,0,.22);}
+.admin-services-list{display:flex;flex-direction:column;gap:12px;margin:12px 0;}
+.admin-service-row{border:1px solid var(--border2);border-radius:8px;background:rgba(255,255,255,.04);padding:12px;display:grid;grid-template-columns:72px 1fr 1fr;gap:10px;align-items:end;}
+.admin-service-row .full{grid-column:1/-1;}
+.admin-help{font-size:12px;color:var(--text3);line-height:1.7;margin-top:-4px;}
 .logo-mark img{object-fit:contain;background:transparent;border-radius:10px;}
 @media(max-width:768px){
   nav{height:84px;padding-inline:18px;}
@@ -714,7 +739,10 @@ body[data-theme="dark"] .cat-btn,body[data-theme="dark"] .product-card,body[data
   .theme-toggle{width:40px;height:40px;}
   .logo-text{font-size:19px;}
   .logo-mark{width:48px;height:48px;}
-  nav::before{width:54%;opacity:.22;}
+  nav::before{width:58%;opacity:.55;}
+  .services-grid{grid-template-columns:1fr;}
+  .admin-service-row{grid-template-columns:1fr;}
+  .admin-service-row .full{grid-column:auto;}
 }
 </style>
 </head>
@@ -739,6 +767,7 @@ body[data-theme="dark"] .cat-btn,body[data-theme="dark"] .product-card,body[data
   </a>
   <div class="nav-links">
     <a href="#categories">الفئات</a>
+    <a href="#services">الخدمات</a>
     <a href="#products">المنتجات</a>
     <a href="#deals">العروض</a>
     <a href="#shipping">الشحن</a>
@@ -755,6 +784,7 @@ body[data-theme="dark"] .cat-btn,body[data-theme="dark"] .product-card,body[data
 <!-- MOBILE MENU -->
 <div class="mobile-menu" id="mobileMenu">
   <a href="#categories" onclick="closeMenu()">📦 الفئات</a>
+  <a href="#services" onclick="closeMenu()">الخدمات</a>
   <a href="#products" onclick="closeMenu()">🛍️ المنتجات</a>
   <a href="#deals" onclick="closeMenu()">🔥 العروض</a>
   <a href="#shipping" onclick="closeMenu()">🚚 الشحن</a>
@@ -820,6 +850,17 @@ body[data-theme="dark"] .cat-btn,body[data-theme="dark"] .product-card,body[data
     </select>
   </div>
   <div class="product-grid" id="productGrid"></div>
+</section>
+
+<!-- SERVICES -->
+<section class="section" id="services">
+  <div class="section-header">
+    <div>
+      <div class="section-tag">خدمات رسال شوب</div>
+      <h2 class="section-title">خدمات جاهزة لتجهيزك</h2>
+    </div>
+  </div>
+  <div class="services-grid" id="servicesGrid"></div>
 </section>
 
 <!-- FEATURES -->
@@ -1150,7 +1191,7 @@ body[data-theme="dark"] .cat-btn,body[data-theme="dark"] .product-card,body[data
       <div class="admin-tab" id="tab-settings">
         <div class="section-tag" style="margin-bottom:.5rem;">الإعدادات</div>
         <h2 class="section-title" style="margin-bottom:1.5rem;">إعدادات المتجر</h2>
-        <div class="add-product-form" style="max-width:500px;">
+        <div class="add-product-form" style="max-width:760px;">
           <div style="margin-bottom:10px;font-weight:800;color:#fff;">معلومات الموقع</div>
           <div class="form-group"><label class="form-label">اسم الموقع</label><input class="form-input" id="settingSiteName" value="رسال شوب"/></div>
           <div class="form-group"><label class="form-label">وصف الموقع في الفوتر</label><input class="form-input" id="settingSiteDescription" value="لسنا الوحيدين ولكننا نطمح لنكون الأفضل. نوصل الجودة لبابك أينما كنت في السلطنة."/></div>
@@ -1167,6 +1208,12 @@ body[data-theme="dark"] .cat-btn,body[data-theme="dark"] .product-card,body[data
           <div class="form-group"><label class="form-label">رابط تيك توك</label><input class="form-input" id="settingTikTok" placeholder="https://tiktok.com/@resal..." dir="ltr"/></div>
           <div class="form-group"><label class="form-label">سعر التوصيل (ر.ع)</label><input class="form-input" type="number" step="0.001" id="settingDelivery" value="1.500"/></div>
           <div class="form-group"><label class="form-label">القيمة المضافة (%)</label><input class="form-input" type="number" step="0.1" min="0" id="settingVatRate" value="5"/></div>
+          <div style="margin-top:10px;margin-bottom:10px;font-weight:800;color:#fff;">الخدمات</div>
+          <div class="admin-help">أضيفي الخدمات التي تريدين عرضها في الصفحة الرئيسية. عند ضغط العميل على الخدمة سيفتح واتساب برسالة الخدمة.</div>
+          <div class="admin-services-list" id="adminServicesList"></div>
+          <button class="btn-ghost" type="button" onclick="addServiceSetting()">+ إضافة خدمة</button>
+          <div style="margin-top:10px;margin-bottom:10px;font-weight:800;color:#fff;">PayPal</div>
+          <div class="form-group"><label class="form-label">رابط PayPal / PayPal.me</label><input class="form-input" id="settingPaypalUrl" placeholder="https://paypal.me/username" dir="ltr"/></div>
           <div style="margin-top:10px;font-weight:800;color:#fff;margin-bottom:8px;">ثواني (Thawani)</div>
           <div class="form-group"><label class="form-label">Thawani Enabled</label>
             <select class="form-select" id="settingThawaniEnabled"><option value="false">false</option><option value="true">true</option></select></div>
@@ -1246,7 +1293,13 @@ let settings = {
   notifyEmail: 'orders@resal.om',
   waNumber: '+96890000000',
   instagramUrl: '',
-  tiktokUrl: ''
+  tiktokUrl: '',
+  paypalUrl: '',
+  services: [
+    {icon:'⚙️', title:'تجهيز سيت أب', desc:'اختيار وتجميع معدات تناسب استخدامك وميزانيتك.', message:'مرحبا، أريد خدمة تجهيز سيت أب.'},
+    {icon:'🎧', title:'استشارة معدات', desc:'نساعدك تختار السماعة أو الشاشة أو المايك المناسب.', message:'مرحبا، أريد استشارة معدات تقنية.'},
+    {icon:'🚚', title:'طلبات خاصة', desc:'اطلب منتج غير موجود وسنحاول توفيره لك بسرعة.', message:'مرحبا، أريد طلب منتج خاص.'}
+  ]
 };
 
 const catLabels = {headphones:'سماعات',gaming:'ألعاب',screens:'شاشات',microphone:'مايكروفونات',accessories:'إكسسوارات',chairs:'كراسي وطاولات'};
@@ -1320,6 +1373,86 @@ function logoHtml(name){
   return `${esc(parts.join(' '))} <span>${esc(last)}</span>`;
 }
 
+function parseServices(value){
+  if(Array.isArray(value))return value;
+  if(!value)return settings.services || [];
+  try{
+    const parsed=JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : (settings.services || []);
+  }catch(e){
+    return settings.services || [];
+  }
+}
+
+function normalizedServices(){
+  return (Array.isArray(settings.services)?settings.services:[]).map(s=>({
+    icon: String(s.icon || '⚡').trim() || '⚡',
+    title: String(s.title || '').trim(),
+    desc: String(s.desc || '').trim(),
+    message: String(s.message || s.title || '').trim()
+  })).filter(s=>s.title);
+}
+
+function renderServices(){
+  const grid=id('servicesGrid');
+  if(!grid)return;
+  const items=normalizedServices();
+  if(!items.length){
+    grid.innerHTML='<div style="color:var(--text3);padding:1rem;">لا توجد خدمات مضافة حالياً.</div>';
+    return;
+  }
+  grid.innerHTML=items.map((s,i)=>`
+    <button class="service-card" type="button" onclick="openServiceWhatsApp(${i})">
+      <div class="service-icon">${esc(s.icon)}</div>
+      <div class="service-title">${esc(s.title)}</div>
+      <div class="service-desc">${esc(s.desc)}</div>
+      <div class="service-cta">تواصل عبر واتساب ←</div>
+    </button>`).join('');
+}
+
+function openServiceWhatsApp(index){
+  const service=normalizedServices()[index];
+  if(!service)return;
+  const text=service.message || `مرحبا، أريد الاستفسار عن خدمة ${service.title}`;
+  window.open(`https://wa.me/${cleanPhone(settings.waNumber)}?text=${encodeURIComponent(text)}`,'_blank','noopener');
+}
+
+function renderAdminServices(){
+  const list=id('adminServicesList');
+  if(!list)return;
+  list.innerHTML=normalizedServices().map((s,i)=>`
+    <div class="admin-service-row">
+      <div class="form-group"><label class="form-label">الأيقونة</label><input class="form-input svc-icon" value="${esc(s.icon)}"/></div>
+      <div class="form-group"><label class="form-label">اسم الخدمة</label><input class="form-input svc-title" value="${esc(s.title)}"/></div>
+      <div class="form-group"><label class="form-label">رسالة واتساب</label><input class="form-input svc-message" value="${esc(s.message)}"/></div>
+      <div class="form-group full"><label class="form-label">وصف الخدمة</label><input class="form-input svc-desc" value="${esc(s.desc)}"/></div>
+      <button class="btn-ghost full" type="button" onclick="removeServiceSetting(${i})">حذف الخدمة</button>
+    </div>`).join('');
+}
+
+function readServicesForm(){
+  const list=id('adminServicesList');
+  if(!list)return normalizedServices();
+  return Array.from(list.querySelectorAll('.admin-service-row')).map(row=>({
+    icon: row.querySelector('.svc-icon')?.value.trim() || '⚡',
+    title: row.querySelector('.svc-title')?.value.trim() || '',
+    desc: row.querySelector('.svc-desc')?.value.trim() || '',
+    message: row.querySelector('.svc-message')?.value.trim() || ''
+  })).filter(s=>s.title);
+}
+
+function addServiceSetting(){
+  settings.services=readServicesForm();
+  settings.services.push({icon:'⚡', title:'خدمة جديدة', desc:'اكتبي وصف الخدمة هنا.', message:'مرحبا، أريد الاستفسار عن خدمة جديدة.'});
+  renderAdminServices();
+}
+
+function removeServiceSetting(index){
+  settings.services=readServicesForm().filter((_,i)=>i!==index);
+  renderAdminServices();
+  renderServices();
+}
+
 function applySettings(){
   if(id('siteLogoText')) id('siteLogoText').innerHTML=logoHtml(settings.siteName);
   if(id('footerLogoText')) id('footerLogoText').innerHTML=logoHtml(settings.siteName);
@@ -1341,6 +1474,7 @@ function applySettings(){
     id('socialTikTok').href=settings.tiktokUrl||'#';
     id('socialTikTok').style.display=settings.tiktokUrl?'inline-flex':'none';
   }
+  renderServices();
 }
 
 function setMeta(name, content, attr='name'){
@@ -1363,8 +1497,10 @@ function fillSettingsForm(){
   id('settingWA').value=settings.waNumber;
   id('settingInstagram').value=settings.instagramUrl||'';
   id('settingTikTok').value=settings.tiktokUrl||'';
+  if(id('settingPaypalUrl')) id('settingPaypalUrl').value=settings.paypalUrl||'';
   id('settingDelivery').value=Number(settings.deliveryCost||0).toFixed(3);
   id('settingVatRate').value=Number(settings.vatRate||0);
+  renderAdminServices();
 }
 
 function normalizeSettingsPayload(data){
@@ -1390,6 +1526,8 @@ function loadSettings(){
       settings.waNumber=s.waNumber||settings.waNumber;
       settings.instagramUrl=s.instagramUrl||settings.instagramUrl;
       settings.tiktokUrl=s.tiktokUrl||settings.tiktokUrl;
+      settings.paypalUrl=s.paypalUrl||settings.paypalUrl;
+      settings.services=parseServices(s.services);
       settings.deliveryCost=parseFloat(s.deliveryCost)||settings.deliveryCost;
       settings.vatRate=s.vatRate!==undefined?parseFloat(s.vatRate):settings.vatRate;
       applySettings();
@@ -1714,7 +1852,7 @@ function goToStep2(){
     <div style="font-weight:800;font-size:16px;color:#fff;margin-bottom:16px;">💳 إتمام الدفع</div>
     <div class="checkout-note" style="margin-bottom:20px;">
       <span>💜</span>
-      <span>أكملي الدفع بأمان عبر ثواني.</span>
+      <span>اختاري بوابة الدفع المناسبة لك.</span>
     </div>
     <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:20px;margin-bottom:20px;">
       <div style="font-weight:800;color:#fff;margin-bottom:12px;">💜 بوابة الدفع - ثواني (جاهز للتكوين)</div>
@@ -1722,6 +1860,11 @@ function goToStep2(){
       <div style="display:flex;gap:8px;margin-top:8px;">
         <button class="btn-primary" onclick="initiateThawani(${grand},'${name}','${wilayat}','${area}','${phone}')">⬈ ادفع عبر ثواني — ${omr(grand)}</button>
       </div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:20px;margin-bottom:20px;">
+      <div style="font-weight:800;color:#fff;margin-bottom:12px;">🅿️ بوابة الدفع - PayPal</div>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:8px;">${settings.paypalUrl?'سيتم فتح رابط PayPal الخاص بالمتجر.':'أضيفي رابط PayPal من إعدادات الأدمن لتفعيل التحويل المباشر.'}</div>
+      <button class="btn-ghost" onclick="initiatePayPal(${grand},'${name}','${wilayat}','${area}','${phone}')">ادفع عبر PayPal — ${omr(grand)}</button>
     </div>
     <div style="display:flex;gap:10px;">
       <button class="btn-ghost" style="flex:1;justify-content:center;" onclick="renderOrderStep1()">← رجوع</button>
@@ -2030,6 +2173,11 @@ function cleanPhone(phone){
   return String(phone||'').replace(/[^\d]/g,'');
 }
 
+function paymentLabel(method){
+  const labels={thawani:'ثواني',paypal:'PayPal'};
+  return labels[String(method||'').toLowerCase()] || method || 'ثواني';
+}
+
 function openOrderWhatsApp(oid,type='followup'){
   const o=orders.find(x=>String(x.id)===String(oid));if(!o)return;
   const items=(o.items||[]).map(i=>`${i.name} × ${i.qty||1}`).join('، ');
@@ -2049,7 +2197,7 @@ function orderInvoiceText(oid){
     `الهاتف: ${o.phone}`,
     `العنوان: ${o.wilayat} / ${o.area}`,
     `الحالة: ${o.statusLabel||o.status}`,
-    `الدفع: ${o.payment||'thawani'}`,
+    `الدفع: ${paymentLabel(o.payment)}`,
     '',
     'المنتجات:',
     items,
@@ -2291,6 +2439,8 @@ function saveSettings(){
   settings.waNumber=id('settingWA').value;
   settings.instagramUrl=id('settingInstagram').value.trim();
   settings.tiktokUrl=id('settingTikTok').value.trim();
+  settings.paypalUrl=id('settingPaypalUrl')?.value.trim() || '';
+  settings.services=readServicesForm();
   settings.deliveryCost=parseFloat(id('settingDelivery').value)||1.500;
   settings.vatRate=parseFloat(id('settingVatRate').value)||0;
   applySettings();
@@ -2307,6 +2457,8 @@ function saveSettings(){
     waNumber: settings.waNumber,
     instagramUrl: settings.instagramUrl,
     tiktokUrl: settings.tiktokUrl,
+    paypalUrl: settings.paypalUrl,
+    services: JSON.stringify(settings.services),
     deliveryCost: settings.deliveryCost,
     vatRate: settings.vatRate,
     thawani_enabled: id('settingThawaniEnabled').value,
@@ -2348,6 +2500,18 @@ function showPasswordReset(){
 }
 
 // Thawani client call
+function initiatePayPal(amount,name,wilayat,area,phone){
+  if(settings.paypalUrl){
+    window.open(settings.paypalUrl,'_blank','noopener');
+  }
+  const ok=confirm('هل اكتمل الدفع عبر PayPal؟');
+  if(ok){
+    submitOrder(name,wilayat,area,phone,amount,'paypal');
+  }else{
+    showToast('تم إلغاء دفع PayPal','⚠️');
+  }
+}
+
 async function initiateThawani(amount,name,wilayat,area,phone){
   try{
     const res = await fetch(API_BASE+'/payments/thawani',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount, orderId: genOrderId()}),credentials:'include'});
