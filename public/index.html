@@ -714,8 +714,21 @@ body[data-theme="dark"] #products .tool-select{
   border-color:rgba(250,204,21,.2)!important;
 }
 body[data-theme="dark"] #products .product-info{background:rgba(0,0,0,.18)!important;}
-body::before{opacity:.22!important;}
-body[data-theme="light"]::before{opacity:.18!important;}
+body[data-theme="dark"] #products{
+  background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.42))!important;
+  position:relative;
+}
+body[data-theme="dark"] #products::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(circle at 6px 6px,rgba(250,204,21,.18) 1px,transparent 1.4px),
+    linear-gradient(115deg,transparent 0 48%,rgba(250,204,21,.06) 49%,transparent 50% 100%);
+  background-size:28px 28px,100% 100%;
+  opacity:.28;
+}
+body[data-theme="dark"] #products > *{position:relative;z-index:1;}
+body::before{opacity:.12!important;}
+body[data-theme="light"]::before{opacity:.1!important;}
 .hero::before{opacity:.2!important;}
 .hero-glow,.hero-glow2,.hero-hex{opacity:.2!important;}
 .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;}
