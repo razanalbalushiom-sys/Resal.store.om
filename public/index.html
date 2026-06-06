@@ -1395,6 +1395,13 @@ let settings = {
   instagramUrl: '',
   tiktokUrl: '',
   paypalUrl: '',
+  thawani_enabled: 'false',
+  thawani_mode: 'test',
+  smtp_host: '',
+  smtp_port: '',
+  smtp_user: '',
+  smtp_pass: '',
+  smtp_from: '',
   categories: [
     {id:'headphones', icon:'🎧', name:'سماعات', active:true},
     {id:'gaming', icon:'🎮', name:'ألعاب', active:true},
@@ -1727,12 +1734,22 @@ function uploadServiceImage(input){
   const row=input.closest('.admin-service-row');
   const imageInput=row?.querySelector('.svc-image');
   const preview=row?.querySelector('.svc-preview');
-  const reader=new FileReader();
-  reader.onload=e=>{
-    if(imageInput)imageInput.value=e.target.result;
-    if(preview)preview.innerHTML=`<img class="service-upload-preview" src="${esc(e.target.result)}" alt="معاينة"/>`;
-  };
-  reader.readAsDataURL(file);
+  if(preview)preview.innerHTML='<span style="color:var(--text3);font-size:12px;">جاري رفع الصورة...</span>';
+  const form=new FormData();
+  form.append('image',file);
+  fetch(API_BASE+'/uploads/image',{method:'POST',body:form,credentials:'include'})
+    .then(r=>r.json())
+    .then(j=>{
+      if(!j.success || !j.url)throw new Error(j.error||'upload failed');
+      if(imageInput)imageInput.value=j.url;
+      if(preview)preview.innerHTML=`<img class="service-upload-preview" src="${esc(j.url)}" alt="معاينة"/>`;
+      showToast('تم رفع صورة الخدمة. اضغطي حفظ الإعدادات لتثبيتها ✅');
+    })
+    .catch(e=>{
+      console.warn('Service image upload failed',e);
+      if(preview)preview.innerHTML='<span style="color:var(--red);font-size:12px;">تعذر رفع الصورة.</span>';
+      showToast('تعذر رفع صورة الخدمة','⚠️');
+    });
 }
 
 function addServiceSetting(){
@@ -1794,6 +1811,16 @@ function fillSettingsForm(){
   id('settingInstagram').value=settings.instagramUrl||'';
   id('settingTikTok').value=settings.tiktokUrl||'';
   if(id('settingPaypalUrl')) id('settingPaypalUrl').value=settings.paypalUrl||'';
+  if(id('settingThawaniEnabled')) id('settingThawaniEnabled').value=String(settings.thawani_enabled||'false');
+  if(id('settingThawaniMode')) id('settingThawaniMode').value=settings.thawani_mode||'test';
+  if(id('settingSMTPHost')) id('settingSMTPHost').value=settings.smtp_host||'';
+  if(id('settingSMTPPort')) id('settingSMTPPort').value=settings.smtp_port||'';
+  if(id('settingSMTPUser')) id('settingSMTPUser').value=settings.smtp_user||'';
+  if(id('settingSMTPPass')){
+    id('settingSMTPPass').value='';
+    id('settingSMTPPass').placeholder=settings.smtp_pass?'محفوظ - اتركيه فارغاً للإبقاء عليه':'••••••••';
+  }
+  if(id('settingSMTPFrom')) id('settingSMTPFrom').value=settings.smtp_from||'';
   id('settingDelivery').value=Number(settings.deliveryCost||0).toFixed(3);
   id('settingVatRate').value=Number(settings.vatRate||0);
   renderAdminServices();
@@ -1808,27 +1835,45 @@ function normalizeSettingsPayload(data){
   return data || {};
 }
 
+function settingValue(source,key,fallback=''){
+  return Object.prototype.hasOwnProperty.call(source||{},key) ? source[key] : fallback;
+}
+
+function settingNumber(source,key,fallback=0){
+  const raw=settingValue(source,key,undefined);
+  if(raw===undefined || raw==='')return fallback;
+  const value=parseFloat(raw);
+  return Number.isFinite(value)?value:fallback;
+}
+
 function loadSettings(){
   fetch(API_BASE+'/settings',{credentials:'include'})
     .then(r=>r.json())
     .then(j=>{
       const s=normalizeSettingsPayload(j.settings||j.rows);
-      settings.siteName=s.siteName||settings.siteName;
-      settings.siteDescription=s.siteDescription||settings.siteDescription;
-      settings.heroTitle=s.heroTitle||settings.heroTitle;
-      settings.heroSubtitle=s.heroSubtitle||settings.heroSubtitle;
-      settings.seoTitle=s.seoTitle||settings.seoTitle;
-      settings.seoDescription=s.seoDescription||settings.seoDescription;
-      settings.seoImage=s.seoImage||settings.seoImage;
-      settings.notifyEmail=s.notifyEmail||settings.notifyEmail;
-      settings.waNumber=s.waNumber||settings.waNumber;
-      settings.instagramUrl=s.instagramUrl||settings.instagramUrl;
-      settings.tiktokUrl=s.tiktokUrl||settings.tiktokUrl;
-      settings.paypalUrl=s.paypalUrl||settings.paypalUrl;
+      settings.siteName=settingValue(s,'siteName',settings.siteName);
+      settings.siteDescription=settingValue(s,'siteDescription',settings.siteDescription);
+      settings.heroTitle=settingValue(s,'heroTitle',settings.heroTitle);
+      settings.heroSubtitle=settingValue(s,'heroSubtitle',settings.heroSubtitle);
+      settings.seoTitle=settingValue(s,'seoTitle',settings.seoTitle);
+      settings.seoDescription=settingValue(s,'seoDescription',settings.seoDescription);
+      settings.seoImage=settingValue(s,'seoImage',settings.seoImage);
+      settings.notifyEmail=settingValue(s,'notifyEmail',settings.notifyEmail);
+      settings.waNumber=settingValue(s,'waNumber',settings.waNumber);
+      settings.instagramUrl=settingValue(s,'instagramUrl',settings.instagramUrl);
+      settings.tiktokUrl=settingValue(s,'tiktokUrl',settings.tiktokUrl);
+      settings.paypalUrl=settingValue(s,'paypalUrl',settings.paypalUrl);
+      settings.thawani_enabled=settingValue(s,'thawani_enabled',settings.thawani_enabled);
+      settings.thawani_mode=settingValue(s,'thawani_mode',settings.thawani_mode);
+      settings.smtp_host=settingValue(s,'smtp_host',settings.smtp_host);
+      settings.smtp_port=settingValue(s,'smtp_port',settings.smtp_port);
+      settings.smtp_user=settingValue(s,'smtp_user',settings.smtp_user);
+      settings.smtp_pass=settingValue(s,'smtp_pass',settings.smtp_pass);
+      settings.smtp_from=settingValue(s,'smtp_from',settings.smtp_from);
       settings.categories=parseCategories(s.categories);
       settings.services=parseServices(s.services);
-      settings.deliveryCost=parseFloat(s.deliveryCost)||settings.deliveryCost;
-      settings.vatRate=s.vatRate!==undefined?parseFloat(s.vatRate):settings.vatRate;
+      settings.deliveryCost=settingNumber(s,'deliveryCost',settings.deliveryCost);
+      settings.vatRate=settingNumber(s,'vatRate',settings.vatRate);
       syncCategoryLabels();
       applySettings();
       renderCategoryButtons();
@@ -3041,10 +3086,18 @@ function saveSettings(){
   settings.instagramUrl=id('settingInstagram').value.trim();
   settings.tiktokUrl=id('settingTikTok').value.trim();
   settings.paypalUrl=id('settingPaypalUrl')?.value.trim() || '';
+  settings.thawani_enabled=id('settingThawaniEnabled')?.value || 'false';
+  settings.thawani_mode=id('settingThawaniMode')?.value.trim() || 'test';
+  settings.smtp_host=id('settingSMTPHost')?.value.trim() || '';
+  settings.smtp_port=id('settingSMTPPort')?.value.trim() || '';
+  settings.smtp_user=id('settingSMTPUser')?.value.trim() || '';
+  settings.smtp_from=id('settingSMTPFrom')?.value.trim() || '';
   settings.categories=readCategoriesForm();
   settings.services=readServicesForm();
-  settings.deliveryCost=parseFloat(id('settingDelivery').value)||1.500;
-  settings.vatRate=parseFloat(id('settingVatRate').value)||0;
+  const deliveryValue=parseFloat(id('settingDelivery').value);
+  const vatValue=parseFloat(id('settingVatRate').value);
+  settings.deliveryCost=Number.isFinite(deliveryValue)?deliveryValue:0;
+  settings.vatRate=Number.isFinite(vatValue)?vatValue:0;
   applySettings();
   // Post to server settings (admin only)
   const payload = {
@@ -3064,14 +3117,18 @@ function saveSettings(){
     services: JSON.stringify(settings.services),
     deliveryCost: settings.deliveryCost,
     vatRate: settings.vatRate,
-    thawani_enabled: id('settingThawaniEnabled').value,
-    thawani_mode: id('settingThawaniMode').value,
-    smtp_host: id('settingSMTPHost').value,
-    smtp_port: id('settingSMTPPort').value,
-    smtp_user: id('settingSMTPUser').value,
-    smtp_pass: id('settingSMTPPass').value,
-    smtp_from: id('settingSMTPFrom').value
+    thawani_enabled: settings.thawani_enabled,
+    thawani_mode: settings.thawani_mode,
+    smtp_host: settings.smtp_host,
+    smtp_port: settings.smtp_port,
+    smtp_user: settings.smtp_user,
+    smtp_from: settings.smtp_from
   };
+  const smtpPass=id('settingSMTPPass')?.value || '';
+  if(smtpPass.trim()){
+    settings.smtp_pass=smtpPass;
+    payload.smtp_pass=smtpPass;
+  }
   fetch(API_BASE+'/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),credentials:'include'})
     .then(r=>r.json()).then(j=>{ if(j.ok||j.success) showToast('تم حفظ الإعدادات ✅'); else showToast('فشل حفظ الإعدادات','⚠️'); })
     .catch(e=>{ showToast('تعذر حفظ الإعدادات في الخادم','⚠️'); });

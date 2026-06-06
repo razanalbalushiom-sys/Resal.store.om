@@ -632,6 +632,25 @@ router.delete('/products/:id', async (req, res) => {
   }
 });
 
+// ============ IMAGE UPLOADS ============
+
+router.post('/uploads/image', upload.single('image'), async (req, res) => {
+  try {
+    if (req.session.userRole !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Admin only' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'Image file is required' });
+    }
+
+    const url = await saveImageBuffer(req.file);
+    res.json({ success: true, ok: true, url });
+  } catch (error) {
+    console.error('Upload image error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // ============ ORDERS ============
 
 router.get('/orders', async (req, res) => {
