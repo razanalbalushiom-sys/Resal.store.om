@@ -714,20 +714,31 @@ body[data-theme="dark"] #products .tool-select{
   border-color:rgba(250,204,21,.2)!important;
 }
 body[data-theme="dark"] #products .product-info{background:rgba(0,0,0,.18)!important;}
-body[data-theme="dark"] #products{
+body[data-theme="dark"] .section{
   background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,.42))!important;
   position:relative;
 }
-body[data-theme="dark"] #products::before{
+body[data-theme="dark"] .section::before{
   content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
   background:
-    radial-gradient(circle at 6px 6px,rgba(250,204,21,.18) 1px,transparent 1.4px),
-    linear-gradient(115deg,transparent 0 48%,rgba(250,204,21,.06) 49%,transparent 50% 100%);
-  background-size:28px 28px,100% 100%;
-  opacity:.28;
+    radial-gradient(circle at 6px 6px,rgba(250,204,21,.1) 1px,transparent 1.4px),
+    linear-gradient(115deg,transparent 0 48%,rgba(250,204,21,.035) 49%,transparent 50% 100%);
+  background-size:32px 32px,100% 100%;
+  opacity:.18;
 }
-body[data-theme="dark"] #products > *{position:relative;z-index:1;}
-body::before{opacity:.12!important;}
+body[data-theme="dark"] .section > *{position:relative;z-index:1;}
+body[data-theme="dark"] .newsletter,
+body[data-theme="dark"] .payment-section,
+body[data-theme="dark"] .trust-bar,
+body[data-theme="dark"] footer{
+  background:rgba(0,0,0,.5)!important;
+}
+body[data-theme="dark"] .service-card,
+body[data-theme="dark"] .feature-card{
+  background:rgba(0,0,0,.5)!important;
+  border-color:rgba(250,204,21,.2)!important;
+}
+body::before{opacity:.08!important;}
 body[data-theme="light"]::before{opacity:.1!important;}
 .hero::before{opacity:.2!important;}
 .hero-glow,.hero-glow2,.hero-hex{opacity:.2!important;}
