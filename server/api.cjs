@@ -344,32 +344,127 @@ function orderText(order) {
   ].join('\n');
 }
 
+function cleanPhone(value) {
+  const digits = String(value || '').replace(/[^\d]/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('968')) return digits;
+  if (digits.length === 8) return `968${digits}`;
+  return digits;
+}
+
+function staffOrderWhatsAppText(order) {
+  const items = (order.items || [])
+    .map(item => `${item.name || item.id} × ${item.qty || 1}`)
+    .join('، ');
+  return [
+    `طلب جديد من رسال شوب`,
+    `رقم الطلب: ${order.order_id}`,
+    `العميل: ${order.customer_name}`,
+    `الهاتف: ${order.phone}`,
+    `العنوان: ${order.wilayat} / ${order.area}`,
+    `المنتجات: ${items}`,
+    `الإجمالي: ${order.total} ر.ع`,
+    `الحالة: جديد`
+  ].join('\n');
+}
+
+async function sendWhatsAppText(to, text) {
+  const token = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.META_WHATSAPP_PHONE_NUMBER_ID;
+  const templateName = process.env.WHATSAPP_NEW_ORDER_TEMPLATE || process.env.META_WHATSAPP_NEW_ORDER_TEMPLATE;
+  const templateLanguage = process.env.WHATSAPP_TEMPLATE_LANGUAGE || 'ar';
+  const recipient = cleanPhone(to);
+  if (!token || !phoneNumberId || !recipient) return false;
+  const payload = templateName
+    ? {
+        messaging_product: 'whatsapp',
+        to: recipient,
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: templateLanguage }
+        }
+      }
+    : {
+        messaging_product: 'whatsapp',
+        to: recipient,
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: text
+        }
+      };
+
+  const response = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`WhatsApp send failed (${response.status}): ${body}`);
+  }
+  return true;
+}
+
+async function notifyStaffWhatsApp(order) {
+  const token = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.META_WHATSAPP_PHONE_NUMBER_ID;
+  if (!token || !phoneNumberId) return false;
+
+  const staff = await supabase.select('users', '?select=*&order=id.asc');
+  const recipients = [...new Set((staff || [])
+    .filter(user => ['admin', 'moderator', 'employee'].includes(user.role))
+    .map(user => cleanPhone(user.phone))
+    .filter(Boolean))];
+  if (!recipients.length) return false;
+
+  const text = staffOrderWhatsAppText(order);
+  const results = await Promise.allSettled(recipients.map(phone => sendWhatsAppText(phone, text)));
+  results
+    .filter(result => result.status === 'rejected')
+    .forEach(result => console.warn('Staff WhatsApp notification failed:', result.reason?.message || result.reason));
+  return results.some(result => result.status === 'fulfilled');
+}
+
 async function notifyNewOrder(order) {
+  let sent = false;
   try {
     const settings = await getSettingsMap();
-    if (!settings.smtp_host || !settings.smtp_user || !settings.notifyEmail) return false;
+    if (settings.smtp_host && settings.smtp_user && settings.notifyEmail) {
+      const transporter = nodemailer.createTransport({
+        host: settings.smtp_host,
+        port: Number(settings.smtp_port || 587),
+        secure: Number(settings.smtp_port || 587) === 465,
+        auth: {
+          user: settings.smtp_user,
+          pass: settings.smtp_pass || process.env.SMTP_PASS || ''
+        }
+      });
 
-    const transporter = nodemailer.createTransport({
-      host: settings.smtp_host,
-      port: Number(settings.smtp_port || 587),
-      secure: Number(settings.smtp_port || 587) === 465,
-      auth: {
-        user: settings.smtp_user,
-        pass: settings.smtp_pass || process.env.SMTP_PASS || ''
-      }
-    });
-
-    await transporter.sendMail({
-      from: settings.smtp_from || settings.smtp_user,
-      to: settings.notifyEmail,
-      subject: `New Resal order ${order.order_id}`,
-      text: orderText(order)
-    });
-    return true;
+      await transporter.sendMail({
+        from: settings.smtp_from || settings.smtp_user,
+        to: settings.notifyEmail,
+        subject: `New Resal order ${order.order_id}`,
+        text: orderText(order)
+      });
+      sent = true;
+    }
   } catch (error) {
-    console.warn('Order notification failed:', error.message);
-    return false;
+    console.warn('Order email notification failed:', error.message);
   }
+
+  try {
+    sent = await notifyStaffWhatsApp(order) || sent;
+  } catch (error) {
+    console.warn('Order WhatsApp notification failed:', error.message);
+  }
+
+  return sent;
 }
 
 function isPasswordMatch(password, storedPassword) {
@@ -443,7 +538,7 @@ router.get('/users', async (req, res) => {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
 
-    const users = await supabase.select('users', '?select=id,email,name,role,created_at&order=id.asc');
+    const users = await supabase.select('users', '?select=*&order=id.asc');
     res.json({ success: true, users: users || [] });
   } catch (error) {
     console.error('Get users error:', error);
@@ -459,6 +554,7 @@ router.post('/users', async (req, res) => {
 
     const email = String(req.body.email || '').trim().toLowerCase();
     const name = String(req.body.name || '').trim();
+    const phone = String(req.body.phone || '').trim();
     const password = String(req.body.password || '');
     const role = ['admin', 'moderator', 'employee'].includes(req.body.role) ? req.body.role : 'employee';
 
@@ -475,6 +571,7 @@ router.post('/users', async (req, res) => {
     const inserted = await supabase.insert('users', {
       email,
       name,
+      phone,
       role,
       password: passwordHash
     });
@@ -482,10 +579,42 @@ router.post('/users', async (req, res) => {
     res.json({
       success: true,
       ok: true,
-      user: user ? { id: user.id, email: user.email, name: user.name, role: user.role, created_at: user.created_at } : null
+      user: user ? { id: user.id, email: user.email, name: user.name, phone: user.phone || '', role: user.role, created_at: user.created_at } : null
     });
   } catch (error) {
     console.error('Create user error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.put('/users/:id', async (req, res) => {
+  try {
+    if (!isAdminRole(req.session.userRole)) {
+      return res.status(403).json({ success: false, error: 'Admin only' });
+    }
+
+    const { id } = req.params;
+    const updates = {};
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, 'name')) {
+      updates.name = String(req.body.name || '').trim();
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, 'phone')) {
+      updates.phone = String(req.body.phone || '').trim();
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body || {}, 'role')) {
+      const role = String(req.body.role || '').trim();
+      if (['admin', 'moderator', 'employee'].includes(role)) updates.role = role;
+    }
+
+    if (!Object.keys(updates).length) {
+      return res.status(400).json({ success: false, error: 'No updates provided' });
+    }
+
+    const result = await supabase.update('users', id, updates);
+    const user = result && result[0];
+    res.json({ success: true, ok: true, user });
+  } catch (error) {
+    console.error('Update user error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -870,7 +999,7 @@ router.get('/backup', async (req, res) => {
       supabase.select('products', '?order=id.asc'),
       supabase.select('orders', '?order=id.desc'),
       supabase.select('settings', '?order=key.asc'),
-      supabase.select('users', '?select=id,email,name,role,created_at&order=id.asc')
+      supabase.select('users', '?select=*&order=id.asc')
     ]);
 
     res.setHeader('Content-Disposition', `attachment; filename="resal-backup-${new Date().toISOString().slice(0, 10)}.json"`);

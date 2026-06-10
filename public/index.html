@@ -1405,6 +1405,10 @@ body,body *{
             <div class="form-group"><label class="form-label">البريد الإلكتروني</label><input class="form-input" id="newModEmail" placeholder="mod@resal.om"/></div>
           </div>
           <div class="form-row">
+            <div class="form-group"><label class="form-label">رقم واتساب</label><input class="form-input" id="newModPhone" placeholder="+9689XXXXXXX" dir="ltr"/></div>
+            <div></div>
+          </div>
+          <div class="form-row">
             <div class="form-group"><label class="form-label">كلمة المرور</label><input class="form-input" type="password" id="newModPass" placeholder="••••••"/></div>
             <div class="form-group"><label class="form-label">الصلاحية</label>
               <select class="form-select" id="newModRole">
@@ -2646,6 +2650,7 @@ function translateAdminForms(){
   setFieldLabel('editPImagesFile','صور المنتج','Product images');
   setFieldLabel('newModName','الاسم','Name');
   setFieldLabel('newModEmail','البريد الإلكتروني','Email');
+  setFieldLabel('newModPhone','رقم واتساب','WhatsApp number');
   setFieldLabel('newModPass','كلمة المرور','Password');
   setFieldLabel('newModRole','الصلاحية','Role');
   setFieldLabel('settingSiteName','اسم الموقع','Site name');
@@ -2668,6 +2673,7 @@ function translateAdminForms(){
   setPlaceholder('newPBoxContents','السماعة\nكيبل الشحن','Headset\nCharging cable');
   setPlaceholder('newPWarranty','مثال: سنة واحدة','Example: one year');
   setPlaceholder('newModName','اسم الموظف','Staff name');
+  setPlaceholder('newModPhone','+9689XXXXXXX','+9689XXXXXXX');
   setSelectLabels('newPActive',[['ظاهر للمتسوقين','Visible to shoppers'],['مخفي مؤقتاً','Temporarily hidden']]);
   setSelectLabels('editPActive',[['ظاهر للمتسوقين','Visible to shoppers'],['مخفي مؤقتاً','Temporarily hidden']]);
   setSelectLabels('newPBadge',[['بدون','None'],['جديد','New'],['خصم','Sale'],['ساخن','Hot']]);
@@ -3253,14 +3259,18 @@ function renderModerators(){
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <span class="mod-role">${roleLabel(a.role)}</span>
+        <input class="form-input mod-phone-input" id="modPhone-${esc(a.id)}" value="${esc(a.phone||'')}" placeholder="+9689XXXXXXX" dir="ltr" style="width:150px;padding:8px 10px;font-size:12px;"/>
+        <button class="mgmt-btn" onclick="saveStaffPhone('${esc(a.id)}')">${adminLabel('حفظ الرقم','Save phone')}</button>
         ${a.role!=='admin'?`<button class="mgmt-btn del" onclick="removeMod('${esc(a.id)}','${esc(a.email)}')">${adminLabel('حذف','Delete')}</button>`:''}
       </div>
     </div>`).join('');
+  enhanceFormAccessibility(list);
 }
 
 function addModerator(){
   const name=id('newModName').value.trim();
   const email=id('newModEmail').value.trim().toLowerCase();
+  const phone=id('newModPhone').value.trim();
   const pass=id('newModPass').value;
   const role=id('newModRole').value;
   if(!name||!email||!pass){showToast('يرجى تعبئة جميع الحقول','⚠️');return;}
@@ -3268,19 +3278,40 @@ function addModerator(){
   fetch(API_BASE+'/users',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({name,email,password:pass,role}),
+    body:JSON.stringify({name,email,phone,password:pass,role}),
     credentials:'include'
   })
     .then(r=>r.json())
     .then(j=>{
       if(!j.success)throw new Error(j.error||'create user failed');
-      id('newModName').value='';id('newModEmail').value='';id('newModPass').value='';
+      id('newModName').value='';id('newModEmail').value='';id('newModPhone').value='';id('newModPass').value='';
       showToast(`تم إضافة ${name} كـ${roleLabel(role)} ✅`);
       fetchModerators();
     })
     .catch(e=>{
       console.warn('Create user failed',e);
       showToast(e.message==='Email already exists'?'هذا البريد مسجل مسبقاً':'تعذر حفظ الموظف في قاعدة البيانات','⚠️');
+    });
+}
+
+function saveStaffPhone(userId){
+  const phone=id(`modPhone-${userId}`)?.value.trim() || '';
+  fetch(API_BASE+'/users/'+encodeURIComponent(userId),{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({phone}),
+    credentials:'include'
+  })
+    .then(r=>r.json())
+    .then(j=>{
+      if(!j.success)throw new Error(j.error||'update user failed');
+      const account=accounts.find(a=>String(a.id)===String(userId));
+      if(account)account.phone=phone;
+      showToast(adminLabel('تم حفظ رقم واتساب ✅','WhatsApp number saved ✅'));
+    })
+    .catch(e=>{
+      console.warn('Update staff phone failed',e);
+      showToast(adminLabel('تعذر حفظ رقم واتساب','Could not save WhatsApp number'),'⚠️');
     });
 }
 
