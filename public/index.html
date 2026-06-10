@@ -1447,8 +1447,6 @@ body,body *{
           <div class="admin-help">أضيفي أو أخفي أي نوع منتجات. الفئات الظاهرة تظهر للمتسوقين، والمخفية تبقى متاحة في لوحة الأدمن.</div>
           <div class="admin-categories-list" id="adminCategoriesList"></div>
           <button class="btn-ghost" type="button" onclick="addCategorySetting()">+ إضافة فئة</button>
-          <div style="margin-top:10px;margin-bottom:10px;font-weight:800;color:#fff;">PayPal</div>
-          <div class="form-group"><label class="form-label">رابط PayPal / PayPal.me</label><input class="form-input" id="settingPaypalUrl" placeholder="https://paypal.me/username" dir="ltr"/></div>
           <div style="margin-top:10px;font-weight:800;color:#fff;margin-bottom:8px;">ثواني (Thawani)</div>
           <div class="form-group"><label class="form-label">Thawani Enabled</label>
             <select class="form-select" id="settingThawaniEnabled"><option value="false">false</option><option value="true">true</option></select></div>
@@ -1532,7 +1530,6 @@ let settings = {
   waNumber: '+96890000000',
   instagramUrl: '',
   tiktokUrl: '',
-  paypalUrl: '',
   thawani_enabled: 'false',
   thawani_mode: 'test',
   smtp_host: '',
@@ -1953,7 +1950,6 @@ function fillSettingsForm(){
   id('settingWA').value=settings.waNumber;
   id('settingInstagram').value=settings.instagramUrl||'';
   id('settingTikTok').value=settings.tiktokUrl||'';
-  if(id('settingPaypalUrl')) id('settingPaypalUrl').value=settings.paypalUrl||'';
   if(id('settingThawaniEnabled')) id('settingThawaniEnabled').value=String(settings.thawani_enabled||'false');
   if(id('settingThawaniMode')) id('settingThawaniMode').value=settings.thawani_mode||'test';
   if(id('settingSMTPHost')) id('settingSMTPHost').value=settings.smtp_host||'';
@@ -2005,7 +2001,6 @@ function loadSettings(){
       settings.waNumber=settingValue(s,'waNumber',settings.waNumber);
       settings.instagramUrl=settingValue(s,'instagramUrl',settings.instagramUrl);
       settings.tiktokUrl=settingValue(s,'tiktokUrl',settings.tiktokUrl);
-      settings.paypalUrl=settingValue(s,'paypalUrl',settings.paypalUrl);
       settings.thawani_enabled=settingValue(s,'thawani_enabled',settings.thawani_enabled);
       settings.thawani_mode=settingValue(s,'thawani_mode',settings.thawani_mode);
       settings.smtp_host=settingValue(s,'smtp_host',settings.smtp_host);
@@ -2422,11 +2417,6 @@ function goToStep2(){
         <button class="btn-primary" onclick="initiateThawani(${grand},'${name}','${wilayat}','${area}','${phone}')">⬈ ادفع عبر ثواني — ${omr(grand)}</button>
       </div>
     </div>
-    <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:20px;margin-bottom:20px;">
-      <div style="font-weight:800;color:#fff;margin-bottom:12px;">🅿️ بوابة الدفع - PayPal</div>
-      <div style="font-size:14px;color:var(--text2);margin-bottom:8px;">${settings.paypalUrl?'سيتم فتح رابط PayPal الخاص بالمتجر.':'أضيفي رابط PayPal من إعدادات الأدمن لتفعيل التحويل المباشر.'}</div>
-      <button class="btn-ghost" onclick="initiatePayPal(${grand},'${name}','${wilayat}','${area}','${phone}')">ادفع عبر PayPal — ${omr(grand)}</button>
-    </div>
     <div style="display:flex;gap:10px;">
       <button class="btn-ghost" style="flex:1;justify-content:center;" onclick="renderOrderStep1()">← رجوع</button>
     </div>`;
@@ -2738,7 +2728,6 @@ function translateAdminForms(){
   setFieldLabel('settingTikTok','رابط تيك توك','TikTok URL');
   setFieldLabel('settingDelivery','سعر التوصيل (ر.ع)','Delivery price (OMR)');
   setFieldLabel('settingVatRate','القيمة المضافة (%)','VAT (%)');
-  setFieldLabel('settingPaypalUrl','رابط PayPal / PayPal.me','PayPal / PayPal.me URL');
   setPlaceholder('newPName','مثال: سوني XM6','Example: Sony XM6');
   setPlaceholder('newPDeliveryTime','مثال: خلال يومين','Example: within 2 days');
   setPlaceholder('newPDesc','وصف المنتج...','Product description...');
@@ -2762,7 +2751,6 @@ function translateAdminForms(){
     ['معلومات التواصل والتوصيل','Contact and delivery'],
     ['الخدمات','Services'],
     ['فئات المنتجات','Product categories'],
-    ['PayPal','PayPal'],
     ['ثواني (Thawani)','Thawani'],
     ['SMTP (Email)','SMTP (Email)']
   ];
@@ -3104,7 +3092,7 @@ function cleanPhone(phone){
 }
 
 function paymentLabel(method){
-  const labels={thawani:'ثواني',paypal:'PayPal'};
+  const labels={thawani:'ثواني'};
   return labels[String(method||'').toLowerCase()] || method || 'ثواني';
 }
 
@@ -3501,7 +3489,6 @@ function saveSettings(){
   settings.waNumber=id('settingWA').value;
   settings.instagramUrl=id('settingInstagram').value.trim();
   settings.tiktokUrl=id('settingTikTok').value.trim();
-  settings.paypalUrl=id('settingPaypalUrl')?.value.trim() || '';
   settings.thawani_enabled=id('settingThawaniEnabled')?.value || 'false';
   settings.thawani_mode=id('settingThawaniMode')?.value.trim() || 'test';
   settings.smtp_host=id('settingSMTPHost')?.value.trim() || '';
@@ -3528,7 +3515,6 @@ function saveSettings(){
     waNumber: settings.waNumber,
     instagramUrl: settings.instagramUrl,
     tiktokUrl: settings.tiktokUrl,
-    paypalUrl: settings.paypalUrl,
     categories: JSON.stringify(settings.categories),
     services: JSON.stringify(settings.services),
     deliveryCost: settings.deliveryCost,
@@ -3573,19 +3559,6 @@ function downloadBackup(){
 function showPasswordReset(){
   const email = prompt('أدخل بريدك الإلكتروني لإرسال رابط إعادة التعيين:');
   if(!email) return; fetch(API_BASE+'/password-reset-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})}).then(()=>showToast('تم إرسال رابط إعادة التعيين إلى بريدك إن كان مسجلاً ✅'));
-}
-
-// Thawani client call
-function initiatePayPal(amount,name,wilayat,area,phone){
-  if(settings.paypalUrl){
-    window.open(settings.paypalUrl,'_blank','noopener');
-  }
-  const ok=confirm('هل اكتمل الدفع عبر PayPal؟');
-  if(ok){
-    submitOrder(name,wilayat,area,phone,amount,'paypal');
-  }else{
-    showToast('تم إلغاء دفع PayPal','⚠️');
-  }
 }
 
 async function initiateThawani(amount,name,wilayat,area,phone){
