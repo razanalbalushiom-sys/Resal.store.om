@@ -352,6 +352,12 @@ function cleanPhone(value) {
   return digits;
 }
 
+function omanLocalPhone(value) {
+  const digits = String(value || '').replace(/[^\d]/g, '');
+  if (digits.startsWith('968') && digits.length === 11) return digits.slice(3);
+  return digits.slice(-8);
+}
+
 function staffOrderWhatsAppText(order) {
   const items = (order.items || [])
     .map(item => `${item.name || item.id} × ${item.qty || 1}`)
@@ -554,12 +560,15 @@ router.post('/users', async (req, res) => {
 
     const email = String(req.body.email || '').trim().toLowerCase();
     const name = String(req.body.name || '').trim();
-    const phone = String(req.body.phone || '').trim();
+    const phone = omanLocalPhone(req.body.phone || '');
     const password = String(req.body.password || '');
     const role = ['admin', 'moderator', 'employee'].includes(req.body.role) ? req.body.role : 'employee';
 
     if (!email || !name || !password) {
       return res.status(400).json({ success: false, error: 'Name, email, and password are required' });
+    }
+    if (phone && phone.length !== 8) {
+      return res.status(400).json({ success: false, error: 'Phone must be an 8-digit Oman number' });
     }
 
     const existing = await supabase.select('users', `?email=eq.${encodeURIComponent(email)}&select=id`);
@@ -599,7 +608,10 @@ router.put('/users/:id', async (req, res) => {
       updates.name = String(req.body.name || '').trim();
     }
     if (Object.prototype.hasOwnProperty.call(req.body || {}, 'phone')) {
-      updates.phone = String(req.body.phone || '').trim();
+      updates.phone = omanLocalPhone(req.body.phone || '');
+      if (updates.phone && updates.phone.length !== 8) {
+        return res.status(400).json({ success: false, error: 'Phone must be an 8-digit Oman number' });
+      }
     }
     if (Object.prototype.hasOwnProperty.call(req.body || {}, 'role')) {
       const role = String(req.body.role || '').trim();
@@ -824,6 +836,10 @@ router.post('/orders', orderLimiter, async (req, res) => {
     if (!name || !wilayat || !area || !phone || !items) {
       return res.status(400).json({ success: false, error: 'Missing required fields' });
     }
+    const customerPhone = omanLocalPhone(phone);
+    if (customerPhone.length !== 8) {
+      return res.status(400).json({ success: false, error: 'Phone must be an 8-digit Oman number' });
+    }
 
     const orderItems = Array.isArray(items) ? items : JSON.parse(items || '[]');
     for (const item of orderItems) {
@@ -846,7 +862,7 @@ router.post('/orders', orderLimiter, async (req, res) => {
       customer_name: name,
       wilayat,
       area,
-      phone,
+      phone: customerPhone,
       items: orderItems,
       delivery: delivery || 'without',
       deliveryCost: parseFloat(deliveryCost) || 0,

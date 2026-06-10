@@ -1179,7 +1179,7 @@ body,body *{
     </div>
     <div class="modal-body-pad">
       <div class="form-group"><label class="form-label">رقم الطلب</label><input class="form-input" id="trackOrderId" placeholder="RS-..." dir="ltr"/></div>
-      <div class="form-group"><label class="form-label">رقم الهاتف</label><input class="form-input" id="trackPhone" placeholder="+968..." dir="ltr"/></div>
+      <div class="form-group"><label class="form-label">رقم الهاتف</label><input class="form-input" id="trackPhone" placeholder="9XXXXXXX" dir="ltr" inputmode="numeric" onblur="normalizeOmanPhoneField(this)"/></div>
       <button class="btn-primary" style="width:100%;justify-content:center;" onclick="trackOrder()">تتبع الطلب</button>
       <div id="trackResult"></div>
     </div>
@@ -1405,7 +1405,7 @@ body,body *{
             <div class="form-group"><label class="form-label">البريد الإلكتروني</label><input class="form-input" id="newModEmail" placeholder="mod@resal.om"/></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label class="form-label">رقم واتساب</label><input class="form-input" id="newModPhone" placeholder="+9689XXXXXXX" dir="ltr"/></div>
+            <div class="form-group"><label class="form-label">رقم واتساب</label><input class="form-input" id="newModPhone" placeholder="9XXXXXXX" dir="ltr" inputmode="numeric" onblur="normalizeOmanPhoneField(this)"/></div>
             <div></div>
           </div>
           <div class="form-row">
@@ -2301,7 +2301,7 @@ function renderOrderStep1(){
       </div>
       <div class="form-group"><label class="form-label">المنطقة / الحي *</label><input class="form-input" id="oArea" placeholder="مثال: الخوير"/></div>
     </div>
-    <div class="form-group"><label class="form-label">رقم التواصل (واتساب) *</label><input class="form-input" id="oPhone" placeholder="+9689XXXXXXXX" dir="ltr"/></div>
+    <div class="form-group"><label class="form-label">رقم التواصل (واتساب) *</label><input class="form-input" id="oPhone" placeholder="9XXXXXXX" dir="ltr" inputmode="numeric" onblur="normalizeOmanPhoneField(this)"/></div>
     <div style="font-weight:800;font-size:15px;color:#fff;margin:20px 0 12px;">🚚 طريقة الاستلام</div>
     <div class="delivery-toggle">
       <div class="delivery-opt selected" id="dOpt1" onclick="selectDelivery('with')">
@@ -2342,8 +2342,10 @@ function goToStep2(){
   const name=id('oName').value.trim();
   const wilayat=id('oWilayat').value;
   const area=id('oArea').value.trim();
-  const phone=id('oPhone').value.trim();
+  const phone=omanLocalPhone(id('oPhone').value);
+  id('oPhone').value=phone;
   if(!name||!wilayat||!area||!phone){showToast('يرجى تعبئة جميع الحقول المطلوبة ⚠️','⚠️');return;}
+  if(phone.length!==8){showToast('رقم واتساب يجب أن يكون 8 أرقام عمانية فقط','⚠️');return;}
 
   const cartTotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
   const deliveryCost=deliveryChoice==='with'?settings.deliveryCost:0;
@@ -2490,9 +2492,11 @@ function prefillTrackOrder(orderId){
 
 function trackOrder(){
   const orderId=id('trackOrderId').value.trim();
-  const phone=id('trackPhone').value.trim();
+  const phone=omanLocalPhone(id('trackPhone').value);
+  id('trackPhone').value=phone;
   const result=id('trackResult');
   if(!orderId||!phone){showToast('أدخلي رقم الطلب ورقم الهاتف','⚠️');return;}
+  if(phone.length!==8){showToast('رقم الهاتف يجب أن يكون 8 أرقام عمانية فقط','⚠️');return;}
   result.innerHTML='<div class="track-card">جاري البحث...</div>';
   fetch(`${API_BASE}/orders/track?orderId=${encodeURIComponent(orderId)}&phone=${encodeURIComponent(phone)}`)
     .then(r=>r.json())
@@ -2673,7 +2677,7 @@ function translateAdminForms(){
   setPlaceholder('newPBoxContents','السماعة\nكيبل الشحن','Headset\nCharging cable');
   setPlaceholder('newPWarranty','مثال: سنة واحدة','Example: one year');
   setPlaceholder('newModName','اسم الموظف','Staff name');
-  setPlaceholder('newModPhone','+9689XXXXXXX','+9689XXXXXXX');
+  setPlaceholder('newModPhone','9XXXXXXX','9XXXXXXX');
   setSelectLabels('newPActive',[['ظاهر للمتسوقين','Visible to shoppers'],['مخفي مؤقتاً','Temporarily hidden']]);
   setSelectLabels('editPActive',[['ظاهر للمتسوقين','Visible to shoppers'],['مخفي مؤقتاً','Temporarily hidden']]);
   setSelectLabels('newPBadge',[['بدون','None'],['جديد','New'],['خصم','Sale'],['ساخن','Hot']]);
@@ -2971,8 +2975,25 @@ function cancelOrder(oid){
   setOrderStatus(oid,'cancelled','ملغي').then(o=>{if(o)showToast(`طلب ${oid} — ملغي`,'⚠️');});
 }
 
-function cleanPhone(phone){
+function phoneDigits(phone){
   return String(phone||'').replace(/[^\d]/g,'');
+}
+
+function cleanPhone(phone){
+  const digits=phoneDigits(phone);
+  if(digits.startsWith('968'))return digits;
+  if(digits.length===8)return `968${digits}`;
+  return digits;
+}
+
+function omanLocalPhone(phone){
+  const digits=phoneDigits(phone);
+  if(digits.startsWith('968') && digits.length===11)return digits.slice(3);
+  return digits.slice(-8);
+}
+
+function normalizeOmanPhoneField(input){
+  if(input)input.value=omanLocalPhone(input.value);
 }
 
 function paymentLabel(method){
@@ -3259,7 +3280,7 @@ function renderModerators(){
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <span class="mod-role">${roleLabel(a.role)}</span>
-        <input class="form-input mod-phone-input" id="modPhone-${esc(a.id)}" value="${esc(a.phone||'')}" placeholder="+9689XXXXXXX" dir="ltr" style="width:150px;padding:8px 10px;font-size:12px;"/>
+        <input class="form-input mod-phone-input" id="modPhone-${esc(a.id)}" value="${esc(omanLocalPhone(a.phone||''))}" placeholder="9XXXXXXX" dir="ltr" inputmode="numeric" onblur="normalizeOmanPhoneField(this)" style="width:120px;padding:8px 10px;font-size:12px;"/>
         <button class="mgmt-btn" onclick="saveStaffPhone('${esc(a.id)}')">${adminLabel('حفظ الرقم','Save phone')}</button>
         ${a.role!=='admin'?`<button class="mgmt-btn del" onclick="removeMod('${esc(a.id)}','${esc(a.email)}')">${adminLabel('حذف','Delete')}</button>`:''}
       </div>
@@ -3270,10 +3291,11 @@ function renderModerators(){
 function addModerator(){
   const name=id('newModName').value.trim();
   const email=id('newModEmail').value.trim().toLowerCase();
-  const phone=id('newModPhone').value.trim();
+  const phone=omanLocalPhone(id('newModPhone').value);
   const pass=id('newModPass').value;
   const role=id('newModRole').value;
   if(!name||!email||!pass){showToast('يرجى تعبئة جميع الحقول','⚠️');return;}
+  if(phone && phone.length!==8){showToast('رقم واتساب يجب أن يكون 8 أرقام عمانية فقط','⚠️');return;}
   if(accounts.find(a=>a.email===email)){showToast('هذا البريد مسجل مسبقاً','⚠️');return;}
   fetch(API_BASE+'/users',{
     method:'POST',
@@ -3295,7 +3317,10 @@ function addModerator(){
 }
 
 function saveStaffPhone(userId){
-  const phone=id(`modPhone-${userId}`)?.value.trim() || '';
+  const phone=omanLocalPhone(id(`modPhone-${userId}`)?.value || '');
+  const phoneInput=id(`modPhone-${userId}`);
+  if(phoneInput)phoneInput.value=phone;
+  if(phone && phone.length!==8){showToast('رقم واتساب يجب أن يكون 8 أرقام عمانية فقط','⚠️');return;}
   fetch(API_BASE+'/users/'+encodeURIComponent(userId),{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
