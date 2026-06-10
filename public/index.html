@@ -1508,6 +1508,7 @@ let orders = [];
 let adminOrderSearch = '';
 let adminOrderStatus = 'all';
 let nextOrderId = 1001;
+let checkoutDraft = JSON.parse(localStorage.getItem('resalCheckoutDraft') || '{}');
 let activeProductDetailsId = null;
 let activeProductImageIndex = 0;
 let productSwipeStartX = 0;
@@ -2266,11 +2267,33 @@ function openOrderModal(){
   closeCart();
   uploadedProof=null;
   currentOrderStep=1;
+  deliveryChoice=checkoutDraft.deliveryChoice || 'with';
   id('orderModalTitle').textContent='📋 تأكيد الطلب';
   renderOrderStep1();
   id('orderOverlay').classList.add('open');
 }
 function closeOrderModal(){id('orderOverlay').classList.remove('open');}
+
+function saveCheckoutDraft(){
+  const draft={
+    name:id('oName') ? id('oName').value.trim() : (checkoutDraft.name || ''),
+    wilayat:id('oWilayat') ? id('oWilayat').value : (checkoutDraft.wilayat || ''),
+    area:id('oArea') ? id('oArea').value.trim() : (checkoutDraft.area || ''),
+    phone:omanLocalPhone(id('oPhone') ? id('oPhone').value : (checkoutDraft.phone || '')),
+    deliveryChoice
+  };
+  checkoutDraft=draft;
+  localStorage.setItem('resalCheckoutDraft',JSON.stringify(draft));
+}
+
+function fillCheckoutDraft(){
+  if(id('oName'))id('oName').value=checkoutDraft.name||'';
+  if(id('oWilayat'))id('oWilayat').value=checkoutDraft.wilayat||'';
+  if(id('oArea'))id('oArea').value=checkoutDraft.area||'';
+  if(id('oPhone'))id('oPhone').value=omanLocalPhone(checkoutDraft.phone||'');
+  deliveryChoice=checkoutDraft.deliveryChoice||deliveryChoice||'with';
+  selectDelivery(deliveryChoice);
+}
 
 function renderOrderStep1(){
   const cartTotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
@@ -2291,17 +2314,17 @@ function renderOrderStep1(){
         </div>
       </div>`).join('')}
     <div style="font-weight:800;font-size:15px;color:#fff;margin:20px 0 12px;">📝 بياناتك الشخصية</div>
-    <div class="form-group"><label class="form-label">الاسم الكامل *</label><input class="form-input" id="oName" placeholder="مثال: محمد بن سالم"/></div>
+    <div class="form-group"><label class="form-label">الاسم الكامل *</label><input class="form-input" id="oName" placeholder="مثال: محمد بن سالم" oninput="saveCheckoutDraft()"/></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">الولاية *</label>
-        <select class="form-select" id="oWilayat">
+        <select class="form-select" id="oWilayat" onchange="saveCheckoutDraft()">
           <option value="">اختر الولاية</option>
           ${wilayats.map(w=>`<option>${w}</option>`).join('')}
         </select>
       </div>
-      <div class="form-group"><label class="form-label">المنطقة / الحي *</label><input class="form-input" id="oArea" placeholder="مثال: الخوير"/></div>
+      <div class="form-group"><label class="form-label">المنطقة / الحي *</label><input class="form-input" id="oArea" placeholder="مثال: الخوير" oninput="saveCheckoutDraft()"/></div>
     </div>
-    <div class="form-group"><label class="form-label">رقم التواصل (واتساب) *</label><input class="form-input" id="oPhone" placeholder="9XXXXXXX" dir="ltr" inputmode="numeric" onblur="normalizeOmanPhoneField(this)"/></div>
+    <div class="form-group"><label class="form-label">رقم التواصل (واتساب) *</label><input class="form-input" id="oPhone" placeholder="9XXXXXXX" dir="ltr" inputmode="numeric" oninput="saveCheckoutDraft()" onblur="normalizeOmanPhoneField(this);saveCheckoutDraft()"/></div>
     <div style="font-weight:800;font-size:15px;color:#fff;margin:20px 0 12px;">🚚 طريقة الاستلام</div>
     <div class="delivery-toggle">
       <div class="delivery-opt selected" id="dOpt1" onclick="selectDelivery('with')">
@@ -2320,6 +2343,7 @@ function renderOrderStep1(){
       <div class="price-row total-row"><span>الإجمالي</span><span id="grandTotal">${omr(totals.grand)}</span></div>
     </div>
     <button class="btn-primary" style="width:100%;justify-content:center;" onclick="goToStep2()">التالي — طريقة الدفع ←</button>`;
+  fillCheckoutDraft();
 }
 
 let deliveryChoice = 'with';
@@ -2336,9 +2360,11 @@ function selectDelivery(v){
   if(vat) vat.textContent=omr(totals.vat);
   const gt=id('grandTotal');
   if(gt) gt.textContent=omr(totals.grand);
+  if(id('oName')||id('oWilayat')||id('oArea')||id('oPhone'))saveCheckoutDraft();
 }
 
 function goToStep2(){
+  saveCheckoutDraft();
   const name=id('oName').value.trim();
   const wilayat=id('oWilayat').value;
   const area=id('oArea').value.trim();
@@ -2418,8 +2444,10 @@ function submitOrder(name,wilayat,area,phone,grand,paymentMethod='thawani'){
     }
     else { orders.unshift(order); showToast('تم إنشاء الطلب محلياً'); }
     showSuccessScreen(order.id,name); cart=[];updateCartUI(); updateNewOrdersBadge();
+    checkoutDraft={};localStorage.removeItem('resalCheckoutDraft');
   }).catch(e=>{
     console.warn('Order API failed',e); orders.unshift(order); showSuccessScreen(orderId,name); cart=[];updateCartUI(); updateNewOrdersBadge();
+    checkoutDraft={};localStorage.removeItem('resalCheckoutDraft');
   });
 }
 
@@ -2433,8 +2461,7 @@ function showSuccessScreen(orderId,name){
       <div class="success-order-id">${orderId}</div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px;font-size:13px;color:var(--text2);line-height:1.8;">
         📱 ستصلك رسالة واتساب على رقمك عند شحن الطلب<br/>
-        📧 تم إرسال تأكيد الطلب على إيميل المتجر<br/>
-        🚚 التوصيل عبر شركة رسال للشحن المحلي
+        📧 تم إرسال تفاصيل الطلب لإدارة المتجر
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
         <button class="btn-primary" style="justify-content:center;" onclick="closeOrderModal()">العودة للمتجر ←</button>
