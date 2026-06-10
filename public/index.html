@@ -1700,7 +1700,7 @@ function renderCategorySelect(selectId, selected=''){
   if(!el)return;
   syncCategoryLabels();
   const cats=normalizedCategories(true);
-  el.innerHTML=cats.map(c=>`<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}${c.active?'':' - مخفية'}</option>`).join('');
+  el.innerHTML=cats.map(c=>`<option value="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}${c.active?'':adminLabel(' - مخفية',' - hidden')}</option>`).join('');
   if(selected && cats.some(c=>c.id===selected))el.value=selected;
   else if(cats[0])el.value=cats[0].id;
 }
@@ -1715,11 +1715,11 @@ function renderAdminCategories(){
   if(!list)return;
   list.innerHTML=normalizedCategories(true).map((c,i)=>`
     <div class="admin-category-row">
-      <div class="form-group"><label class="form-label">الأيقونة</label><input class="form-input cat-icon" value="${esc(c.icon)}"/></div>
-      <div class="form-group"><label class="form-label">اسم الفئة</label><input class="form-input cat-name" value="${esc(c.name)}"/></div>
-      <div class="form-group"><label class="form-label">المعرف</label><input class="form-input cat-id" value="${esc(c.id)}" dir="ltr"/></div>
-      <div class="form-group"><label class="form-label">الحالة</label><select class="form-select cat-active"><option value="true" ${c.active?'selected':''}>ظاهرة</option><option value="false" ${!c.active?'selected':''}>مخفية</option></select></div>
-      <button class="btn-ghost full" type="button" onclick="removeCategorySetting(${i})">حذف الفئة</button>
+      <div class="form-group"><label class="form-label">${adminLabel('الأيقونة','Icon')}</label><input class="form-input cat-icon" value="${esc(c.icon)}"/></div>
+      <div class="form-group"><label class="form-label">${adminLabel('اسم الفئة','Category name')}</label><input class="form-input cat-name" value="${esc(c.name)}"/></div>
+      <div class="form-group"><label class="form-label">${adminLabel('المعرف','Slug')}</label><input class="form-input cat-id" value="${esc(c.id)}" dir="ltr"/></div>
+      <div class="form-group"><label class="form-label">${adminLabel('الحالة','Status')}</label><select class="form-select cat-active"><option value="true" ${c.active?'selected':''}>${adminLabel('ظاهرة','Visible')}</option><option value="false" ${!c.active?'selected':''}>${adminLabel('مخفية','Hidden')}</option></select></div>
+      <button class="btn-ghost full" type="button" onclick="removeCategorySetting(${i})">${adminLabel('حذف الفئة','Delete category')}</button>
     </div>`).join('');
   enhanceFormAccessibility(list);
 }
@@ -1740,7 +1740,7 @@ function readCategoriesForm(){
 
 function addCategorySetting(){
   settings.categories=readCategoriesForm();
-  settings.categories.push({id:'new-category', icon:'📦', name:'فئة جديدة', active:true});
+  settings.categories.push({id:'new-category', icon:'📦', name:adminLabel('فئة جديدة','New category'), active:true});
   renderAdminCategories();
   renderCategoryButtons();
   renderAllCategorySelects();
@@ -1826,7 +1826,7 @@ function renderServices(){
   if(!grid)return;
   const items=normalizedServices();
   if(!items.length){
-    grid.innerHTML='<div style="color:var(--text3);padding:1rem;">لا توجد خدمات مضافة حالياً.</div>';
+    grid.innerHTML=`<div style="color:var(--text3);padding:1rem;">${adminLabel('لا توجد خدمات مضافة حالياً.','No services added yet.')}</div>`;
     return;
   }
   grid.innerHTML=items.map((s,i)=>`
@@ -1835,7 +1835,7 @@ function renderServices(){
       <div class="service-icon">${esc(s.icon)}</div>
       <div class="service-title">${esc(s.title)}</div>
       <div class="service-desc">${esc(s.desc)}</div>
-      <div class="service-cta">تواصل عبر واتساب ←</div>
+      <div class="service-cta">${adminLabel('تواصل عبر واتساب ←','Contact via WhatsApp ←')}</div>
     </button>`).join('');
 }
 
@@ -1844,12 +1844,12 @@ function renderAdminServices(){
   if(!list)return;
   list.innerHTML=normalizedServices().map((s,i)=>`
     <div class="admin-service-row">
-      <div class="form-group"><label class="form-label">الأيقونة</label><input class="form-input svc-icon" value="${esc(s.icon)}"/></div>
-      <div class="form-group"><label class="form-label">اسم الخدمة</label><input class="form-input svc-title" value="${esc(s.title)}"/></div>
-      <div class="form-group"><label class="form-label">رسالة واتساب</label><input class="form-input svc-message" value="${esc(s.message)}"/></div>
-      <div class="form-group full"><label class="form-label">صورة الخدمة</label><input class="form-input svc-image" value="${esc(s.image)}" placeholder="رابط الصورة أو ارفعي صورة" dir="ltr"/><input type="file" accept="image/*" onchange="uploadServiceImage(this)" style="margin-top:8px;"/><div class="svc-preview">${s.image?`<img class="service-upload-preview" src="${esc(s.image)}" alt="معاينة"/>`:''}</div></div>
-      <div class="form-group full"><label class="form-label">وصف الخدمة</label><input class="form-input svc-desc" value="${esc(s.desc)}"/></div>
-      <button class="btn-ghost full" type="button" onclick="removeServiceSetting(${i})">حذف الخدمة</button>
+      <div class="form-group"><label class="form-label">${adminLabel('الأيقونة','Icon')}</label><input class="form-input svc-icon" value="${esc(s.icon)}"/></div>
+      <div class="form-group"><label class="form-label">${adminLabel('اسم الخدمة','Service name')}</label><input class="form-input svc-title" value="${esc(s.title)}"/></div>
+      <div class="form-group"><label class="form-label">${adminLabel('رسالة واتساب','WhatsApp message')}</label><input class="form-input svc-message" value="${esc(s.message)}"/></div>
+      <div class="form-group full"><label class="form-label">${adminLabel('صورة الخدمة','Service image')}</label><input class="form-input svc-image" value="${esc(s.image)}" placeholder="${adminLabel('رابط الصورة أو ارفعي صورة','Image URL or upload an image')}" dir="ltr"/><input type="file" accept="image/*" onchange="uploadServiceImage(this)" style="margin-top:8px;"/><div class="svc-preview">${s.image?`<img class="service-upload-preview" src="${esc(s.image)}" alt="${adminLabel('معاينة','Preview')}"/>`:''}</div></div>
+      <div class="form-group full"><label class="form-label">${adminLabel('وصف الخدمة','Service description')}</label><input class="form-input svc-desc" value="${esc(s.desc)}"/></div>
+      <button class="btn-ghost full" type="button" onclick="removeServiceSetting(${i})">${adminLabel('حذف الخدمة','Delete service')}</button>
     </div>`).join('');
   enhanceFormAccessibility(list);
 }
@@ -1891,7 +1891,12 @@ function uploadServiceImage(input){
 
 function addServiceSetting(){
   settings.services=readServicesForm();
-  settings.services.push({icon:'⚡', title:'خدمة جديدة', desc:'اكتبي وصف الخدمة هنا.', message:'مرحبا، أريد الاستفسار عن خدمة جديدة.'});
+  settings.services.push({
+    icon:'⚡',
+    title:adminLabel('خدمة جديدة','New service'),
+    desc:adminLabel('اكتبي وصف الخدمة هنا.','Write the service description here.'),
+    message:adminLabel('مرحبا، أريد الاستفسار عن خدمة جديدة.','Hello, I want to ask about a new service.')
+  });
   renderAdminServices();
 }
 
@@ -2663,6 +2668,118 @@ function setText(selector, ar, en){
   document.querySelectorAll(selector).forEach(el=>{ el.textContent=adminLabel(ar,en); });
 }
 
+function setAdminText(el, ar, en){
+  if(el)el.textContent=adminLabel(ar,en);
+}
+
+function setFieldLabel(fieldId, ar, en){
+  const field=id(fieldId);
+  const label=field?.closest('.form-group')?.querySelector('.form-label');
+  setAdminText(label, ar, en);
+}
+
+function setPlaceholder(fieldId, ar, en){
+  const field=id(fieldId);
+  if(field)field.placeholder=adminLabel(ar,en);
+}
+
+function setSelectLabels(selectId, labels){
+  const select=id(selectId);
+  if(!select)return;
+  Array.from(select.options).forEach((option,i)=>{
+    if(labels[i])option.textContent=adminLabel(labels[i][0],labels[i][1]);
+  });
+}
+
+function translateAdminForms(){
+  setFieldLabel('newPName','اسم المنتج','Product name');
+  setFieldLabel('newPCat','الفئة','Category');
+  setFieldLabel('newPPrice','السعر (ر.ع)','Price (OMR)');
+  setFieldLabel('newPOldPrice','سعر قبل الخصم (اختياري)','Old price (optional)');
+  setFieldLabel('newPStock','المخزون','Stock');
+  setFieldLabel('newPDeliveryTime','مدة التوصيل','Delivery time');
+  setFieldLabel('newPActive','حالة الظهور','Visibility');
+  setFieldLabel('newPEmoji','الإيموجي','Emoji');
+  setFieldLabel('newPBadge','الشارة','Badge');
+  setFieldLabel('newPDesc','الوصف','Description');
+  setFieldLabel('newPSpecs','المواصفات - كل سطر مواصفة','Specs - one per line');
+  setFieldLabel('newPBoxContents','محتويات العلبة - كل سطر عنصر','Box contents - one per line');
+  setFieldLabel('newPWarranty','الضمان','Warranty');
+  setFieldLabel('newPImages','صور المنتج (اختياري)','Product images (optional)');
+  setFieldLabel('editPName','اسم المنتج','Product name');
+  setFieldLabel('editPCat','الفئة','Category');
+  setFieldLabel('editPPrice','السعر (ر.ع)','Price (OMR)');
+  setFieldLabel('editPOldPrice','سعر قبل الخصم','Old price');
+  setFieldLabel('editPStock','المخزون','Stock');
+  setFieldLabel('editPDeliveryTime','مدة التوصيل','Delivery time');
+  setFieldLabel('editPActive','حالة الظهور','Visibility');
+  setFieldLabel('editPEmoji','الإيموجي','Emoji');
+  setFieldLabel('editPBadge','الشارة','Badge');
+  setFieldLabel('editPDesc','الوصف','Description');
+  setFieldLabel('editPSpecs','المواصفات - كل سطر مواصفة','Specs - one per line');
+  setFieldLabel('editPBoxContents','محتويات العلبة - كل سطر عنصر','Box contents - one per line');
+  setFieldLabel('editPWarranty','الضمان','Warranty');
+  setFieldLabel('editPImagesFile','صور المنتج','Product images');
+  setFieldLabel('newModName','الاسم','Name');
+  setFieldLabel('newModEmail','البريد الإلكتروني','Email');
+  setFieldLabel('newModPass','كلمة المرور','Password');
+  setFieldLabel('newModRole','الصلاحية','Role');
+  setFieldLabel('settingSiteName','اسم الموقع','Site name');
+  setFieldLabel('settingSiteDescription','وصف الموقع في الفوتر','Footer site description');
+  setFieldLabel('settingHeroTitle','عنوان الصفحة الرئيسية','Homepage title');
+  setFieldLabel('settingHeroSubtitle','وصف الصفحة الرئيسية','Homepage description');
+  setFieldLabel('settingSeoTitle','عنوان المتصفح وGoogle','Browser and Google title');
+  setFieldLabel('settingSeoDescription','وصف Google وWhatsApp','Google and WhatsApp description');
+  setFieldLabel('settingSeoImage','رابط صورة المشاركة (اختياري)','Share image URL (optional)');
+  setFieldLabel('settingEmail','إيميل استقبال الطلبات','Order receiving email');
+  setFieldLabel('settingWA','رقم واتساب للإشعارات','WhatsApp notification number');
+  setFieldLabel('settingInstagram','رابط إنستغرام','Instagram URL');
+  setFieldLabel('settingTikTok','رابط تيك توك','TikTok URL');
+  setFieldLabel('settingDelivery','سعر التوصيل (ر.ع)','Delivery price (OMR)');
+  setFieldLabel('settingVatRate','القيمة المضافة (%)','VAT (%)');
+  setFieldLabel('settingPaypalUrl','رابط PayPal / PayPal.me','PayPal / PayPal.me URL');
+  setPlaceholder('newPName','مثال: سوني XM6','Example: Sony XM6');
+  setPlaceholder('newPDeliveryTime','مثال: خلال يومين','Example: within 2 days');
+  setPlaceholder('newPDesc','وصف المنتج...','Product description...');
+  setPlaceholder('newPSpecs','إلغاء ضوضاء نشط\nبطارية 30 ساعة','Active noise cancellation\n30-hour battery');
+  setPlaceholder('newPBoxContents','السماعة\nكيبل الشحن','Headset\nCharging cable');
+  setPlaceholder('newPWarranty','مثال: سنة واحدة','Example: one year');
+  setPlaceholder('newModName','اسم الموظف','Staff name');
+  setSelectLabels('newPActive',[['ظاهر للمتسوقين','Visible to shoppers'],['مخفي مؤقتاً','Temporarily hidden']]);
+  setSelectLabels('editPActive',[['ظاهر للمتسوقين','Visible to shoppers'],['مخفي مؤقتاً','Temporarily hidden']]);
+  setSelectLabels('newPBadge',[['بدون','None'],['جديد','New'],['خصم','Sale'],['ساخن','Hot']]);
+  setSelectLabels('editPBadge',[['بدون','None'],['جديد','New'],['خصم','Sale'],['ساخن','Hot']]);
+  setSelectLabels('newModRole',[['مشرف','Moderator'],['موظف','Employee']]);
+  setAdminText(document.querySelector('#addProductFormContainer .add-product-form > div:first-child'),'➕ منتج جديد','➕ New product');
+  setAdminText(document.querySelector('#editProductFormContainer .add-product-form > div:first-child'),'✏️ تعديل المنتج','✏️ Edit product');
+  const modFormTitle=document.querySelector('#tab-moderators .add-product-form > div:first-child');
+  setAdminText(modFormTitle,'➕ إضافة موظف جديد','➕ Add new staff member');
+  const settingsHeadings=document.querySelectorAll('#tab-settings .add-product-form > div[style*="font-weight:800"]');
+  const headingLabels=[
+    ['معلومات الموقع','Site information'],
+    ['SEO ومشاركة الرابط','SEO and link sharing'],
+    ['معلومات التواصل والتوصيل','Contact and delivery'],
+    ['الخدمات','Services'],
+    ['فئات المنتجات','Product categories'],
+    ['PayPal','PayPal'],
+    ['ثواني (Thawani)','Thawani'],
+    ['SMTP (Email)','SMTP (Email)']
+  ];
+  settingsHeadings.forEach((el,i)=>{ if(headingLabels[i])setAdminText(el,headingLabels[i][0],headingLabels[i][1]); });
+  const helps=document.querySelectorAll('#tab-settings .admin-help');
+  setAdminText(helps[0],'أضيفي الخدمات التي تريدين عرضها في الصفحة الرئيسية. عند ضغط العميل على الخدمة سيفتح واتساب برسالة الخدمة.','Add services to show on the homepage. When a customer clicks a service, WhatsApp opens with that service message.');
+  setAdminText(helps[1],'أضيفي أو أخفي أي نوع منتجات. الفئات الظاهرة تظهر للمتسوقين، والمخفية تبقى متاحة في لوحة الأدمن.','Add or hide product types. Visible categories appear to shoppers, hidden ones stay available in admin.');
+  setAdminText(document.querySelector('#tab-settings button[onclick="addServiceSetting()"]'),'+ إضافة خدمة','+ Add service');
+  setAdminText(document.querySelector('#tab-settings button[onclick="addCategorySetting()"]'),'+ إضافة فئة','+ Add category');
+  setAdminText(document.querySelector('#tab-settings button[onclick="saveSettings()"]'),'💾 حفظ الإعدادات','💾 Save settings');
+  setAdminText(document.querySelector('#tab-settings button[onclick="downloadBackup()"]'),'⬇️ تنزيل نسخة احتياطية','⬇️ Download backup');
+  setAdminText(document.querySelector('#tab-moderators button[onclick="addModerator()"]'),'إضافة الموظف','Add staff');
+  setAdminText(document.querySelector('#addProductFormContainer button[onclick="addNewProduct()"]'),'حفظ المنتج','Save product');
+  setAdminText(document.querySelector('#addProductFormContainer button[onclick="hideAddProductForm()"]'),'إلغاء','Cancel');
+  setAdminText(document.querySelector('#editProductFormContainer button[onclick="saveEditedProduct()"]'),'حفظ التعديلات','Save changes');
+  setAdminText(document.querySelector('#editProductFormContainer button[onclick="hideEditProductForm()"]'),'إلغاء','Cancel');
+}
+
 function applyAdminLanguage(){
   const isEn=adminLang==='en';
   const panel=id('adminPanel');
@@ -2676,6 +2793,20 @@ function applyAdminLanguage(){
   setText('[data-admin-tab-btn="products"] .sidebar-label','المنتجات','Products');
   setText('#modsTabBtn .sidebar-label','الموظفون','Staff');
   setText('[data-admin-tab-btn="settings"] .sidebar-label','الإعدادات','Settings');
+  const welcomeName=currentUser?.name?` ${currentUser.name}`:'';
+  setAdminText(id('adminWelcome'),`- مرحباً${welcomeName}`,`- Hello${welcomeName}`);
+  setAdminText(id('adminPanel')?.querySelector('.admin-nav .btn-ghost:last-child'),'✕ إغلاق','✕ Close');
+  setText('#tab-dashboard > .section-tag','نظرة عامة','Overview');
+  setText('#tab-dashboard > .section-title','لوحة التحكم','Dashboard');
+  setAdminText(id('recentOrdersPreview')?.previousElementSibling,'📦 أحدث الطلبات','📦 Latest orders');
+  setText('#tab-orders > .section-tag','إدارة','Management');
+  setText('#tab-products > .section-tag','إدارة','Management');
+  setText('#tab-products > .section-title','المنتجات','Products');
+  setAdminText(document.querySelector('#tab-products > .btn-primary'),'+ إضافة منتج جديد','+ Add new product');
+  setText('#tab-moderators > .section-tag','إدارة','Management');
+  setText('#tab-moderators > .section-title','الموظفون والمشرفون','Staff and moderators');
+  setText('#tab-settings > .section-tag','الإعدادات','Settings');
+  setText('#tab-settings > .section-title','إعدادات المتجر','Store settings');
   if(id('adminOrderSearch'))id('adminOrderSearch').placeholder=adminLabel('ابحث برقم الطلب، الاسم، الهاتف...','Search order, customer, phone...');
   const status=id('adminOrderStatus');
   if(status){
@@ -2695,6 +2826,12 @@ function applyAdminLanguage(){
     ordersTitle.textContent=adminLabel('الطلبات ','Orders ');
     if(badge)ordersTitle.appendChild(badge);
   }
+  translateAdminForms();
+  renderAllCategorySelects();
+  renderAdminCategories();
+  renderAdminServices();
+  renderProductsMgmt();
+  renderDashboard();
   renderOrdersTable();
 }
 
@@ -2717,7 +2854,6 @@ function applyAdminPermissions(){
 }
 
 function openAdmin(){
-  id('adminWelcome').textContent=`— مرحباً ${currentUser.name}`;
   id('adminPanel').classList.add('open');
   applyAdminPermissions();
   applyAdminLanguage();
@@ -2789,29 +2925,29 @@ function renderDashboard(){
   }));
   const topProducts=Object.entries(soldMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
   id('dashStats').innerHTML=`
-    <div class="stat-card"><div class="stat-card-num">${orders.length}</div><div class="stat-card-label">إجمالي الطلبات</div></div>
-    <div class="stat-card"><div class="stat-card-num">${newOrders}</div><div class="stat-card-label">طلبات جديدة</div></div>
-    <div class="stat-card"><div class="stat-card-num">${visibleCount}/${products.length}</div><div class="stat-card-label">منتجات ظاهرة</div></div>
-    <div class="stat-card"><div class="stat-card-num">${omr(totalRev)}</div><div class="stat-card-label">إجمالي الإيرادات</div></div>
-    <div class="stat-card"><div class="stat-card-num">${omr(todayRev)}</div><div class="stat-card-label">إيراد اليوم</div></div>
-    <div class="stat-card"><div class="stat-card-num">${lowStock.length}</div><div class="stat-card-label">مخزون منخفض</div></div>`;
+    <div class="stat-card"><div class="stat-card-num">${orders.length}</div><div class="stat-card-label">${adminLabel('إجمالي الطلبات','Total orders')}</div></div>
+    <div class="stat-card"><div class="stat-card-num">${newOrders}</div><div class="stat-card-label">${adminLabel('طلبات جديدة','New orders')}</div></div>
+    <div class="stat-card"><div class="stat-card-num">${visibleCount}/${products.length}</div><div class="stat-card-label">${adminLabel('منتجات ظاهرة','Visible products')}</div></div>
+    <div class="stat-card"><div class="stat-card-num">${omr(totalRev)}</div><div class="stat-card-label">${adminLabel('إجمالي الإيرادات','Total revenue')}</div></div>
+    <div class="stat-card"><div class="stat-card-num">${omr(todayRev)}</div><div class="stat-card-label">${adminLabel('إيراد اليوم','Today revenue')}</div></div>
+    <div class="stat-card"><div class="stat-card-num">${lowStock.length}</div><div class="stat-card-label">${adminLabel('مخزون منخفض','Low stock')}</div></div>`;
   const recentEl=id('recentOrdersPreview');
-  const recentTable=orders.length?`<table class="orders-table"><thead><tr><th>رقم الطلب</th><th>الزبون</th><th>المنتج</th><th>الإجمالي</th><th>الحالة</th></tr></thead>
+  const recentTable=orders.length?`<table class="orders-table"><thead><tr><th>${adminLabel('رقم الطلب','Order #')}</th><th>${adminLabel('الزبون','Customer')}</th><th>${adminLabel('المنتج','Product')}</th><th>${adminLabel('الإجمالي','Total')}</th><th>${adminLabel('الحالة','Status')}</th></tr></thead>
     <tbody>${orders.slice(0,5).map(o=>`<tr>
       <td style="font-weight:700;color:var(--purple-bright);">${esc(o.id)}</td>
       <td>${esc(o.name)}</td>
       <td>${(o.items||[]).map(i=>esc((i.emoji||'')+' '+i.name)).join(', ').substring(0,40)}...</td>
       <td style="font-weight:700;">${omr(Number(o.total||0))}</td>
       <td>${statusBadge(o.status,o.statusLabel)}</td>
-    </tr>`).join('')}</tbody></table>`:'<div style="color:var(--text3);font-size:14px;padding:1rem 0;">لا توجد طلبات بعد.</div>';
+    </tr>`).join('')}</tbody></table>`:`<div style="color:var(--text3);font-size:14px;padding:1rem 0;">${adminLabel('لا توجد طلبات بعد.','No orders yet.')}</div>`;
   recentEl.innerHTML=`
     ${recentTable}
     <div class="admin-mini-grid">
-      <div class="admin-mini-panel"><h4>منتجات تحتاج متابعة</h4><ul>${lowStock.length?lowStock.slice(0,6).map(p=>`<li><span>${esc(p.name)}</span><strong>${p.stock}</strong></li>`).join(''):'<li>المخزون ممتاز حالياً</li>'}</ul></div>
-      <div class="admin-mini-panel"><h4>الأكثر طلباً</h4><ul>${topProducts.length?topProducts.map(([name,qty])=>`<li><span>${esc(name)}</span><strong>${qty}</strong></li>`).join(''):'<li>تظهر بعد وصول طلبات</li>'}</ul></div>
-      <div class="admin-mini-panel"><h4>إجراءات سريعة</h4><ul>
-        <li><button class="mgmt-btn" onclick="adminTab('products',document.querySelector('[onclick*=products]'))">إدارة المنتجات</button></li>
-        <li><button class="mgmt-btn" onclick="adminTab('settings',document.querySelector('[onclick*=settings]'))">إعدادات الموقع</button></li>
+      <div class="admin-mini-panel"><h4>${adminLabel('منتجات تحتاج متابعة','Products needing attention')}</h4><ul>${lowStock.length?lowStock.slice(0,6).map(p=>`<li><span>${esc(p.name)}</span><strong>${p.stock}</strong></li>`).join(''):`<li>${adminLabel('المخزون ممتاز حالياً','Stock looks good now')}</li>`}</ul></div>
+      <div class="admin-mini-panel"><h4>${adminLabel('الأكثر طلباً','Top ordered')}</h4><ul>${topProducts.length?topProducts.map(([name,qty])=>`<li><span>${esc(name)}</span><strong>${qty}</strong></li>`).join(''):`<li>${adminLabel('تظهر بعد وصول طلبات','Appears after orders arrive')}</li>`}</ul></div>
+      <div class="admin-mini-panel"><h4>${adminLabel('إجراءات سريعة','Quick actions')}</h4><ul>
+        <li><button class="mgmt-btn" onclick="adminTab('products',document.querySelector('[onclick*=products]'))">${adminLabel('إدارة المنتجات','Manage products')}</button></li>
+        <li><button class="mgmt-btn" onclick="adminTab('settings',document.querySelector('[onclick*=settings]'))">${adminLabel('إعدادات الموقع','Site settings')}</button></li>
       </ul></div>
     </div>`;
 }
@@ -3036,8 +3172,8 @@ function renderProductsMgmt(){
       <div class="mgmt-card-info">
         <div class="mgmt-card-name">${esc(p.name)}</div>
         <div class="mgmt-card-price">${omr(p.price)}</div>
-        <div style="margin:6px 0;"><span class="stock-pill ${Number(p.stock||0)<=0?'stock-out':''}">${Number(p.stock||0)>0?`المخزون: ${p.stock}`:'غير متوفر'}</span></div>
-        <div style="margin:6px 0;"><span class="visibility-pill ${p.isActive===false?'hidden':''}">${p.isActive===false?'مخفي عن الموقع':'ظاهر في الموقع'}</span></div>
+        <div style="margin:6px 0;"><span class="stock-pill ${Number(p.stock||0)<=0?'stock-out':''}">${Number(p.stock||0)>0?`${adminLabel('المخزون','Stock')}: ${p.stock}`:adminLabel('غير متوفر','Out of stock')}</span></div>
+        <div style="margin:6px 0;"><span class="visibility-pill ${p.isActive===false?'hidden':''}">${p.isActive===false?adminLabel('مخفي عن الموقع','Hidden from site'):adminLabel('ظاهر في الموقع','Visible on site')}</span></div>
         <div class="mgmt-actions">
           <button class="mgmt-btn" onclick="showEditProductForm(${p.id})">${adminLabel('تعديل','Edit')}</button>
           <button class="mgmt-btn" onclick="toggleProductVisibility(${p.id})">${p.isActive===false?adminLabel('إظهار','Show'):adminLabel('إخفاء','Hide')}</button>
@@ -3082,7 +3218,7 @@ function showEditProductForm(pid){
   const imgs=productImages(p);
   id('editPCurrentImages').innerHTML=imgs.length
     ? imgs.map(previewThumb).join('')
-    : '<div style="color:var(--text3);font-size:13px;">لا توجد صور محفوظة حالياً.</div>';
+    : `<div style="color:var(--text3);font-size:13px;">${adminLabel('لا توجد صور محفوظة حالياً.','No saved images yet.')}</div>`;
   id('editPNewPreview').innerHTML='';
   id('editProductFormContainer').style.display='block';
   id('editProductFormContainer').scrollIntoView({behavior:'smooth',block:'start'});
@@ -3098,7 +3234,7 @@ function previewEditProductImages(e){
       previews.push(ev.target.result); done++;
       if(done===files.length){
         id('editPNewPreview').innerHTML=`
-          <div style="width:100%;color:var(--purple-bright);font-size:13px;font-weight:700;">الصور الجديدة ستحل مكان الصور الحالية بعد الحفظ:</div>
+          <div style="width:100%;color:var(--purple-bright);font-size:13px;font-weight:700;">${adminLabel('الصور الجديدة ستحل مكان الصور الحالية بعد الحفظ:','New images will replace current images after saving:')}</div>
           ${previews.map(previewThumb).join('')}`;
       }
     };
@@ -3260,13 +3396,15 @@ function removeMod(email){
 }
 
 function roleLabel(role){
-  return role==='admin'?'مدير رئيسي':role==='moderator'?'مشرف':'موظف';
+  if(role==='admin')return adminLabel('مدير رئيسي','Main admin');
+  if(role==='moderator')return adminLabel('مشرف','Moderator');
+  return adminLabel('موظف','Employee');
 }
 
 function fetchModerators(){
-  if(currentUser?.role!=='admin')return;
+  if(!isAdminUser())return;
   const list=id('modList');
-  if(list)list.innerHTML='<div style="color:var(--text3);padding:1rem;">جاري تحميل الموظفين...</div>';
+  if(list)list.innerHTML=`<div style="color:var(--text3);padding:1rem;">${adminLabel('جاري تحميل الموظفين...','Loading staff...')}</div>`;
   fetch(API_BASE+'/users',{credentials:'include'})
     .then(r=>r.json())
     .then(j=>{
@@ -3276,7 +3414,7 @@ function fetchModerators(){
     })
     .catch(e=>{
       console.warn('Fetch users failed',e);
-      if(list)list.innerHTML='<div style="color:var(--red);padding:1rem;">تعذر تحميل الموظفين.</div>';
+      if(list)list.innerHTML=`<div style="color:var(--red);padding:1rem;">${adminLabel('تعذر تحميل الموظفين.','Could not load staff.')}</div>`;
     });
 }
 
@@ -3284,7 +3422,7 @@ function renderModerators(){
   const list=id('modList');
   if(!list)return;
   if(!accounts.length){
-    list.innerHTML='<div style="color:var(--text3);padding:1rem;">لا يوجد موظفون بعد.</div>';
+    list.innerHTML=`<div style="color:var(--text3);padding:1rem;">${adminLabel('لا يوجد موظفون بعد.','No staff yet.')}</div>`;
     return;
   }
   list.innerHTML=accounts.map(a=>`
@@ -3298,7 +3436,7 @@ function renderModerators(){
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <span class="mod-role">${roleLabel(a.role)}</span>
-        ${a.role!=='admin'?`<button class="mgmt-btn del" onclick="removeMod('${esc(a.id)}','${esc(a.email)}')">حذف</button>`:''}
+        ${a.role!=='admin'?`<button class="mgmt-btn del" onclick="removeMod('${esc(a.id)}','${esc(a.email)}')">${adminLabel('حذف','Delete')}</button>`:''}
       </div>
     </div>`).join('');
 }
@@ -3330,7 +3468,7 @@ function addModerator(){
 }
 
 function removeMod(userId,email){
-  if(!confirm('هل تريد حذف هذا الموظف؟'))return;
+  if(!confirm(adminLabel('هل تريد حذف هذا الموظف؟','Do you want to delete this staff member?')))return;
   fetch(API_BASE+'/users/'+encodeURIComponent(userId),{method:'DELETE',credentials:'include'})
     .then(r=>r.json())
     .then(j=>{
