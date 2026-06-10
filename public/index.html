@@ -21,6 +21,7 @@
 }
 html{scroll-behavior:smooth;}
 body{font-family:var(--font-ar);background:var(--bg);color:var(--text);overflow-x:hidden;direction:rtl;letter-spacing:0;}
+body.admin-open{overflow:hidden;}
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--purple2);border-radius:3px;}
@@ -2854,6 +2855,7 @@ function applyAdminPermissions(){
 }
 
 function openAdmin(){
+  document.body.classList.add('admin-open');
   id('adminPanel').classList.add('open');
   applyAdminPermissions();
   applyAdminLanguage();
@@ -2870,7 +2872,10 @@ function openAdmin(){
   }
   updateNewOrdersBadge();
 }
-function closeAdmin(){id('adminPanel').classList.remove('open');}
+function closeAdmin(){
+  id('adminPanel').classList.remove('open');
+  document.body.classList.remove('admin-open');
+}
 
 // ========================= ADMIN TABS =========================
 function adminTab(tab,btn){
