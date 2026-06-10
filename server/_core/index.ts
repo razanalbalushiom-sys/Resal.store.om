@@ -64,7 +64,7 @@ async function startServer() {
       directives: {
         "default-src": ["'self'"],
         "base-uri": ["'self'"],
-        "form-action": ["'self'", "https://wa.me", "https://www.paypal.com", "https://paypal.me"],
+        "form-action": ["'self'", "https://wa.me"],
         "frame-ancestors": ["'none'"],
         "script-src": ["'self'", "'unsafe-inline'"],
         "script-src-attr": ["'unsafe-inline'"],

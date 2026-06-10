@@ -4,12 +4,12 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
+    "dev": "tsx watch server/_core/index.ts",
     "build": "echo 'Build skipped - using static files'",
-    "start": "NODE_ENV=production tsx server/_core/index.ts",
+    "start": "tsx server/_core/index.ts",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",

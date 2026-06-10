@@ -1500,8 +1500,6 @@ let activeFilter = 'all';
 let productSearch = '';
 let productSort = 'default';
 let currentOrderStep = 1;
-// Thawani-ready configuration (fill keys later)
-let thawaniConfig = { enabled: false, mode: 'test', publicKey: '', secretKey: '' };
 let orders = [];
 let adminOrderSearch = '';
 let adminOrderStatus = 'all';
@@ -1752,61 +1750,11 @@ function removeCategorySetting(index){
   renderProducts();
 }
 
-function normalizedServices(){
-  return (Array.isArray(settings.services)?settings.services:[]).map(s=>({
-    icon: String(s.icon || '⚡').trim() || '⚡',
-    title: String(s.title || '').trim(),
-    desc: String(s.desc || '').trim(),
-    message: String(s.message || s.title || '').trim()
-  })).filter(s=>s.title);
-}
-
-function renderServices(){
-  const grid=id('servicesGrid');
-  if(!grid)return;
-  const items=normalizedServices();
-  if(!items.length){
-    grid.innerHTML='<div style="color:var(--text3);padding:1rem;">لا توجد خدمات مضافة حالياً.</div>';
-    return;
-  }
-  grid.innerHTML=items.map((s,i)=>`
-    <button class="service-card" type="button" onclick="openServiceWhatsApp(${i})">
-      <div class="service-icon">${esc(s.icon)}</div>
-      <div class="service-title">${esc(s.title)}</div>
-      <div class="service-desc">${esc(s.desc)}</div>
-      <div class="service-cta">تواصل عبر واتساب ←</div>
-    </button>`).join('');
-}
-
 function openServiceWhatsApp(index){
   const service=normalizedServices()[index];
   if(!service)return;
   const text=service.message || `مرحبا، أريد الاستفسار عن خدمة ${service.title}`;
   window.open(`https://wa.me/${cleanPhone(settings.waNumber)}?text=${encodeURIComponent(text)}`,'_blank','noopener');
-}
-
-function renderAdminServices(){
-  const list=id('adminServicesList');
-  if(!list)return;
-  list.innerHTML=normalizedServices().map((s,i)=>`
-    <div class="admin-service-row">
-      <div class="form-group"><label class="form-label">الأيقونة</label><input class="form-input svc-icon" value="${esc(s.icon)}"/></div>
-      <div class="form-group"><label class="form-label">اسم الخدمة</label><input class="form-input svc-title" value="${esc(s.title)}"/></div>
-      <div class="form-group"><label class="form-label">رسالة واتساب</label><input class="form-input svc-message" value="${esc(s.message)}"/></div>
-      <div class="form-group full"><label class="form-label">وصف الخدمة</label><input class="form-input svc-desc" value="${esc(s.desc)}"/></div>
-      <button class="btn-ghost full" type="button" onclick="removeServiceSetting(${i})">حذف الخدمة</button>
-    </div>`).join('');
-}
-
-function readServicesForm(){
-  const list=id('adminServicesList');
-  if(!list)return normalizedServices();
-  return Array.from(list.querySelectorAll('.admin-service-row')).map(row=>({
-    icon: row.querySelector('.svc-icon')?.value.trim() || '⚡',
-    title: row.querySelector('.svc-title')?.value.trim() || '',
-    desc: row.querySelector('.svc-desc')?.value.trim() || '',
-    message: row.querySelector('.svc-message')?.value.trim() || ''
-  })).filter(s=>s.title);
 }
 
 function normalizedServices(){
@@ -2412,7 +2360,7 @@ function goToStep2(){
     </div>
     <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:20px;margin-bottom:20px;">
       <div style="font-weight:800;color:#fff;margin-bottom:12px;">💜 بوابة الدفع - ثواني (جاهز للتكوين)</div>
-      <div style="font-size:14px;color:var(--text2);margin-bottom:8px;">الوضع: ${thawaniConfig.enabled?thawaniConfig.mode+' (مفعل)':'غير مفعل — أضف مفاتيح ثواني في الإعدادات'}</div>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:8px;">الوضع: ${String(settings.thawani_enabled)==='true'?(settings.thawani_mode||'test')+' (مفعل)':'غير مفعل — أضف مفاتيح ثواني في الإعدادات'}</div>
       <div style="display:flex;gap:8px;margin-top:8px;">
         <button class="btn-primary" onclick="initiateThawani(${grand},'${name}','${wilayat}','${area}','${phone}')">⬈ ادفع عبر ثواني — ${omr(grand)}</button>
       </div>
@@ -2467,21 +2415,6 @@ function submitOrder(name,wilayat,area,phone,grand,paymentMethod='thawani'){
   }).catch(e=>{
     console.warn('Order API failed',e); orders.unshift(order); showSuccessScreen(orderId,name); cart=[];updateCartUI(); updateNewOrdersBadge();
   });
-}
-
-// Simulated Thawani initiation (scaffold)
-function initiateThawani(amount,name,wilayat,area,phone){
-  console.log('Thawani initiate:', thawaniConfig, amount);
-  if(!thawaniConfig.enabled){
-    if(!confirm('بوابة ثواني غير مفعلّة حالياً. هل تريد محاكاة عملية الدفع للاختبار؟')) return;
-  }
-  // Simulate redirect & success
-  showToast('جارٍ إعادة التوجيه لبوابة الدفع...','⬈');
-  setTimeout(()=>{
-    if(confirm('محاكاة: هل اكتمل الدفع بنجاح؟')){
-      submitOrder(name,wilayat,area,phone,amount,'thawani');
-    } else { showToast('تم إلغاء الدفع','⚠️'); }
-  },800);
 }
 
 function showSuccessScreen(orderId,name){
@@ -2884,26 +2817,6 @@ function adminTab(tab,btn){
 
 // ========================= DASHBOARD =========================
 function renderDashboard(){
-  const totalRev=orders.reduce((s,o)=>s+o.total,0);
-  const newOrders=orders.filter(o=>o.status==='new').length;
-  id('dashStats').innerHTML=`
-    <div class="stat-card"><div class="stat-card-num">${orders.length}</div><div class="stat-card-label">إجمالي الطلبات</div></div>
-    <div class="stat-card"><div class="stat-card-num">${newOrders}</div><div class="stat-card-label">طلبات جديدة</div></div>
-    <div class="stat-card"><div class="stat-card-num">${products.length}</div><div class="stat-card-label">المنتجات</div></div>
-    <div class="stat-card"><div class="stat-card-num">${omr(totalRev)}</div><div class="stat-card-label">إجمالي الإيرادات</div></div>`;
-  const recentEl=id('recentOrdersPreview');
-  if(!orders.length){recentEl.innerHTML='<div style="color:var(--text3);font-size:14px;padding:1rem 0;">لا توجد طلبات بعد.</div>';return;}
-  recentEl.innerHTML=`<table class="orders-table"><thead><tr><th>رقم الطلب</th><th>الزبون</th><th>المنتج</th><th>الإجمالي</th><th>الحالة</th></tr></thead>
-    <tbody>${orders.slice(0,5).map(o=>`<tr>
-      <td style="font-weight:700;color:var(--purple-bright);">${o.id}</td>
-      <td>${o.name}</td>
-      <td>${o.items.map(i=>i.emoji+' '+i.name).join(', ').substring(0,30)}…</td>
-      <td style="font-weight:700;">${omr(o.total)}</td>
-      <td>${statusBadge(o.status,o.statusLabel)}</td>
-    </tr>`).join('')}</tbody></table>`;
-}
-
-function renderDashboard(){
   const totalRev=orders.reduce((s,o)=>s+Number(o.total||0),0);
   const todayKey=new Date().toISOString().slice(0,10);
   const todayOrders=orders.filter(o=>String(o.created_at||o.createdAt||'').slice(0,10)===todayKey);
@@ -2952,41 +2865,6 @@ function statusBadge(s,label){
 }
 
 // ========================= ORDERS TABLE =========================
-function renderOrdersTable(){
-  updateNewOrdersBadge();
-  const tbody=id('ordersTableBody');
-  const q=adminOrderSearch.trim().toLowerCase();
-  const filtered=orders.filter(o=>{
-    const statusOk=adminOrderStatus==='all'||o.status===adminOrderStatus;
-    const text=[o.id,o.name,o.phone,o.wilayat,o.area,(o.items||[]).map(i=>i.name).join(' ')].join(' ').toLowerCase();
-    return statusOk && (!q || text.includes(q));
-  });
-  if(!filtered.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem;">لا توجد طلبات مطابقة.</td></tr>';return;}
-  tbody.innerHTML=filtered.map(o=>`<tr>
-    <td style="font-weight:700;color:var(--purple-bright);">${o.id}</td>
-    <td>
-      <div style="font-weight:700;">${o.name}</div>
-      <div style="font-size:12px;color:var(--text3);" dir="ltr">${o.phone}</div>
-    </td>
-    <td>${o.wilayat} / ${o.area}</td>
-    <td style="font-size:13px;">${o.items.map(i=>i.emoji+' '+i.name).join('<br/>')}</td>
-    <td style="font-weight:700;color:var(--purple-bright);">${omr(o.total)}</td>
-    <td>${o.delivery==='with'?'🚚 مع توصيل':'🏪 بدون توصيل'}</td>
-    <td>${statusBadge(o.status,o.statusLabel)}</td>
-    <td><div class="order-actions">
-      <button class="mgmt-btn" onclick="openOrderWhatsApp('${o.id}')">واتساب</button>
-      <button class="mgmt-btn" onclick="copyOrderInvoice('${o.id}')">نسخ</button>
-      <button class="mgmt-btn" onclick="printOrderInvoice('${o.id}')">طباعة</button>
-      ${o.status==='new'?`<button class="mgmt-btn" onclick="processOrder('${o.id}')" style="background:rgba(255,140,0,.2);border-color:#ff8c00;color:#ff8c00;">⚙️ معالجة</button>`:''}
-      ${o.status==='processing'?`<button class="ship-btn" onclick="shipOrder('${o.id}')">🚚 أرسل للشحن</button>`:''}
-      ${o.status==='shipped'?`<button class="mgmt-btn" onclick="doneOrder('${o.id}')" style="background:rgba(0,229,160,.1);border-color:#00e5a0;color:#00e5a0;">✅ تسليم</button>`:''}
-      ${!['done','cancelled'].includes(o.status)?`<button class="mgmt-btn del" onclick="cancelOrder('${o.id}')">إلغاء</button>`:''}
-      ${o.status==='done'?`<span style="color:var(--text3);font-size:12px;">مكتمل ✓</span>`:''}
-      ${o.status==='cancelled'?`<span style="color:#ff4757;font-size:12px;">ملغي</span>`:''}
-    </div></td>
-  </tr>`).join('');
-}
-
 function renderOrdersTable(){
   updateNewOrdersBadge();
   const tbody=id('ordersTableBody');
@@ -3139,23 +3017,6 @@ function printOrderInvoice(oid){
 }
 
 // ========================= PRODUCTS MGMT =========================
-function renderProductsMgmt(){
-  const grid=id('productsMgmtGrid');
-  grid.innerHTML=products.map(p=>`
-    <div class="mgmt-card">
-      <div class="mgmt-card-img">${productMainVisual(p)}</div>
-      <div class="mgmt-card-info">
-        <div class="mgmt-card-name">${p.name}</div>
-        <div class="mgmt-card-price">${omr(p.price)}</div>
-        <div style="margin:6px 0;"><span class="stock-pill ${Number(p.stock||0)<=0?'stock-out':''}">${Number(p.stock||0)>0?`المخزون: ${p.stock}`:'غير متوفر'}</span></div>
-        <div class="mgmt-actions">
-          <button class="mgmt-btn" onclick="showEditProductForm(${p.id})">✏️ تعديل</button>
-          <button class="mgmt-btn del" onclick="deleteProduct(${p.id})">🗑️ حذف</button>
-        </div>
-      </div>
-    </div>`).join('');
-}
-
 function renderProductsMgmt(){
   const grid=id('productsMgmtGrid');
   if(!grid)return;
@@ -3351,43 +3212,6 @@ function deleteProduct(pid){
 }
 
 // ========================= MODERATORS =========================
-function renderModerators(){
-  const list=id('modList');
-  list.innerHTML=accounts.map(a=>`
-    <div class="mod-item">
-      <div class="mod-info">
-        <div class="mod-avatar">${a.emoji||'👤'}</div>
-        <div>
-          <div class="mod-name">${a.name}</div>
-          <div class="mod-email">${a.email}</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span class="mod-role">${a.role==='admin'?'مدير رئيسي':a.role==='moderator'?'مشرف':'موظف'}</span>
-        ${a.role!=='admin'?`<button class="mgmt-btn del" onclick="removeMod('${a.email}')">حذف</button>`:''}
-      </div>
-    </div>`).join('');
-}
-
-function addModerator(){
-  const name=id('newModName').value.trim();
-  const email=id('newModEmail').value.trim().toLowerCase();
-  const pass=id('newModPass').value;
-  const role=id('newModRole').value;
-  if(!name||!email||!pass){showToast('يرجى تعبئة جميع الحقول','⚠️');return;}
-  if(accounts.find(a=>a.email===email)){showToast('هذا البريد مسجل مسبقاً','⚠️');return;}
-  accounts.push({email,pass,name,role,emoji:'👤'});
-  renderModerators();
-  id('newModName').value='';id('newModEmail').value='';id('newModPass').value='';
-  showToast(`تم إضافة ${name} كـ${role==='moderator'?'مشرف':'موظف'} ✅`);
-}
-
-function removeMod(email){
-  if(!confirm('هل تريد حذف هذا الموظف؟'))return;
-  accounts=accounts.filter(a=>a.email!==email);
-  renderModerators();showToast('تم حذف الموظف 🗑️','🗑️');
-}
-
 function roleLabel(role){
   if(role==='admin')return adminLabel('مدير رئيسي','Main admin');
   if(role==='moderator')return adminLabel('مشرف','Moderator');
@@ -3562,6 +3386,12 @@ function showPasswordReset(){
 }
 
 async function initiateThawani(amount,name,wilayat,area,phone){
+  if(String(settings.thawani_enabled)!=='true'){
+    if(confirm('بوابة ثواني غير مفعلة حالياً. هل تريدين محاكاة الدفع للاختبار؟')){
+      submitOrder(name,wilayat,area,phone,amount,'thawani');
+    }
+    return;
+  }
   try{
     const res = await fetch(API_BASE+'/payments/thawani',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount, orderId: genOrderId()}),credentials:'include'});
     const j = await res.json();
